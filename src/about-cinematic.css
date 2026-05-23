@@ -1,0 +1,982 @@
+/* Cinematic About — premium motion layers */
+
+.cin-showcase {
+  --cin-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cin-showcase__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.cin-showcase__tab {
+  position: relative;
+  padding: 0.55rem 1rem;
+  font-family: ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgb(148 163 184);
+  border: 1px solid rgb(255 255 255 / 0.08);
+  border-radius: 9999px;
+  background: rgb(0 0 0 / 0.35);
+  backdrop-filter: blur(12px);
+  transition: color 0.35s var(--cin-ease), border-color 0.35s var(--cin-ease),
+    box-shadow 0.35s var(--cin-ease), transform 0.35s var(--cin-ease);
+}
+
+.cin-showcase__tab:hover {
+  color: rgb(226 232 240);
+  border-color: rgb(255 255 255 / 0.18);
+  transform: translateY(-1px);
+}
+
+.cin-showcase__tab--active {
+  color: rgb(250 250 250);
+  border-color: rgb(167 139 250 / 0.45);
+  box-shadow: 0 0 28px -6px rgb(139 92 246 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+.cin-showcase__stage-wrap {
+  position: relative;
+  margin-top: 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  box-shadow: 0 40px 100px -40px rgb(0 0 0 / 0.85), inset 0 1px 0 rgb(255 255 255 / 0.04);
+  overflow: hidden;
+}
+
+.cin-showcase__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgb(255 255 255 / 0.06);
+  background: rgb(0 0 0 / 0.5);
+  backdrop-filter: blur(16px);
+}
+
+.cin-showcase__replay {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  font-size: 10px;
+  font-family: ui-monospace, monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgb(203 213 225);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.04);
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.cin-showcase__replay:hover {
+  color: white;
+  border-color: rgb(167 139 250 / 0.4);
+  background: rgb(139 92 246 / 0.12);
+}
+
+.cin-showcase__replay--on-light {
+  color: rgb(71 85 105);
+  border-color: rgb(0 0 0 / 0.12);
+  background: rgb(0 0 0 / 0.04);
+}
+
+.cin-showcase__replay--on-light:hover {
+  color: rgb(15 23 42);
+  border-color: rgb(0 0 0 / 0.2);
+  background: rgb(0 0 0 / 0.08);
+}
+
+.about-animation-stage + .about-animation-stage {
+  margin-top: 0;
+}
+
+.cin-ink-canvas-stage {
+  isolation: isolate;
+}
+
+/* —— Hero → basketball knock → ink pour —— */
+.ink-splat-scroll-zone {
+  position: relative;
+  overflow: visible;
+}
+
+.ink-story-bridge {
+  position: relative;
+  margin-bottom: 0;
+}
+
+/* One viewport to reach the hoop; extra scroll length comes from GSAP pin spacing */
+.ink-story-bridge--shot {
+  height: 100vh;
+  min-height: 100vh;
+}
+
+.ink-story-bridge__pin--shot-only {
+  position: relative;
+}
+
+.ink-story-bridge__pin {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding-bottom: clamp(0.5rem, 2vh, 1.25rem);
+}
+
+.ink-story-bridge__pin--with-bottle,
+.ink-story-bridge__pin--shot-only {
+  position: relative;
+}
+
+/* Bounce pin + card — pulled up so ball reaches ink without excess vertical bounce */
+.ink-story-journey {
+  position: relative;
+  margin-top: clamp(-7rem, -16vh, -4rem);
+}
+
+.ink-story-journey__stage {
+  position: relative;
+  width: 100%;
+  max-width: 56rem;
+  min-height: 72dvh;
+  margin: 0 auto;
+  pointer-events: none;
+}
+
+/* Card sits below ink; rises on its own scroll (not covering the bottle) */
+.ink-story-journey .ink-splat-pour-block {
+  margin-top: clamp(-8vh, -12vh, -5rem);
+  position: relative;
+  z-index: 4;
+}
+
+.basketball-knock-scene--bounce-coords {
+  flex: 1 1 auto;
+  min-height: 42%;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.basketball-knock-scene {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 42%;
+  width: 100%;
+  max-width: 56rem;
+  margin: 0 auto;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.basketball-knock-scene__ball-img {
+  z-index: 4;
+}
+
+.basketball-knock-scene__hoop-img {
+  position: absolute;
+  left: 0;
+  top: 42%;
+  z-index: 12;
+  width: clamp(150px, 34vw, 300px);
+  max-height: min(52vh, 420px);
+  height: auto;
+  object-fit: contain;
+  object-position: left center;
+  transform: translate(-14%, -50%);
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.45));
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.basketball-knock-scene__ball-img {
+  position: absolute;
+  width: clamp(40px, 6.5vw, 58px);
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.45));
+  will-change: left, top, transform;
+  transform-origin: center center;
+}
+
+.basketball-path-editor__toolbar {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: min(100%, 22rem);
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.75rem;
+  background: rgba(8, 8, 15, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+}
+
+.basketball-path-editor__btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #e2e8f0;
+  background: rgba(139, 92, 246, 0.35);
+  border: 1px solid rgba(167, 139, 250, 0.45);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.basketball-path-editor__btn:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.55);
+}
+
+.basketball-path-editor__btn.is-active {
+  background: rgba(34, 211, 238, 0.25);
+  border-color: rgba(34, 211, 238, 0.55);
+}
+
+.basketball-path-editor__btn--lock {
+  background: rgba(16, 185, 129, 0.28);
+  border-color: rgba(52, 211, 153, 0.45);
+}
+
+.basketball-path-editor__btn--ghost {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.basketball-path-editor__btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.basketball-path-editor__status {
+  flex: 1 1 100%;
+  font-family: ui-monospace, monospace;
+  font-size: 0.62rem;
+  line-height: 1.35;
+  color: #94a3b8;
+}
+
+.basketball-path-editor__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  cursor: crosshair;
+  touch-action: none;
+  pointer-events: auto;
+}
+
+.basketball-path-editor__path {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.basketball-path-editor__stroke {
+  fill: none;
+  stroke-width: 0.55;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.basketball-path-editor__stroke--draft {
+  stroke: #34d399;
+  stroke-dasharray: 1.2 0.8;
+  opacity: 0.95;
+}
+
+.basketball-path-editor__stroke--locked {
+  stroke: #a78bfa;
+  opacity: 0.85;
+}
+
+.basketball-path-editor__handle {
+  position: absolute;
+  z-index: 35;
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #8b5cf6;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.basketball-path-editor__handle:active {
+  cursor: grabbing;
+  background: #22d3ee;
+  scale: 1.15;
+}
+
+.ink-bottle-slot--knock-target.is-knocked .ink-bottle-pedestal__inner {
+  transition: transform 0.2s ease;
+}
+
+@media (max-width: 767px) {
+  .basketball-knock-scene__hoop-img {
+    width: clamp(120px, 40vw, 220px);
+    transform: translate(-18%, -50%);
+  }
+}
+
+.ink-splat-scroll-runway {
+  height: min(50vh, 420px);
+  pointer-events: none;
+}
+
+.ink-splat-scroll-hint {
+  animation: ink-hint-pulse 2.2s ease-in-out infinite;
+}
+
+/* Fixed HUD — enable with ?basketballDebug=1 or npm run dev */
+.basketball-scroll-debug {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 99999;
+  width: min(280px, calc(100vw - 24px));
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(167, 139, 250, 0.45);
+  background: rgba(8, 8, 12, 0.92);
+  color: #e2e8f0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.35;
+  pointer-events: none;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+.basketball-scroll-debug__title {
+  margin: 0 0 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #a78bfa;
+}
+
+.basketball-scroll-debug__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+  margin: 0;
+}
+
+.basketball-scroll-debug__grid dt {
+  margin: 0;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+}
+
+.basketball-scroll-debug__grid dd {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.basketball-scroll-debug__hint {
+  margin: 8px 0 0;
+  font-size: 9px;
+  color: #64748b;
+}
+
+@keyframes ink-hint-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.ink-splat-pour-block {
+  margin-top: clamp(-2.5rem, -7vh, 0.5rem);
+}
+
+.ink-story-bridge + .ink-splat-pour-block {
+  margin-top: 0;
+}
+
+.cin-showcase__stage-wrap--pour {
+  overflow: visible;
+  margin-top: 0;
+}
+
+.cin-showcase.about-me-card .cin-showcase__stage-wrap--pour {
+  margin-top: 0;
+}
+
+/* Bottle in slot — 180° spin around image center */
+.ink-bottle-slot {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  width: 100%;
+  min-height: clamp(220px, 38vh, 340px);
+  margin-bottom: -2px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.ink-bottle-slot--placed {
+  position: absolute;
+  z-index: 22;
+  width: auto;
+  min-height: unset;
+  margin: 0;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.45s ease, visibility 0.45s ease;
+}
+
+.ink-bottle-slot--placed.is-visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.ink-bottle-slot--placed.is-moving {
+  z-index: 40;
+  pointer-events: auto;
+}
+
+.ink-bottle-slot--placed.is-moving .ink-bottle-pedestal__inner--placed {
+  cursor: grab;
+  touch-action: none;
+}
+
+.ink-bottle-slot--placed.is-knocked {
+  z-index: 13;
+}
+
+.basketball-fixed-ball {
+  position: fixed;
+  inset: 0;
+  z-index: 16;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.basketball-fixed-ball__img {
+  position: absolute;
+  width: clamp(40px, 6.5vw, 58px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.45));
+  will-change: left, top, transform;
+  transform-origin: center center;
+}
+
+.basketball-document-ball {
+  position: absolute;
+  z-index: 16;
+  width: clamp(40px, 6.5vw, 58px);
+  height: auto;
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.45));
+  will-change: left, top, transform;
+  transform-origin: center center;
+}
+
+.basketball-path-editor__toolbar--multi {
+  flex-direction: column;
+  align-items: stretch;
+  max-width: min(100%, 26rem);
+}
+
+.basketball-path-editor__segment-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.basketball-path-editor__tab {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.4rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+
+.basketball-path-editor__tab.is-active {
+  border-color: rgba(34, 211, 238, 0.55);
+  background: rgba(34, 211, 238, 0.12);
+}
+
+.basketball-path-editor__tab.is-locked:not(.is-active) {
+  border-color: rgba(167, 139, 250, 0.35);
+}
+
+.basketball-path-editor__tab--add {
+  border-style: dashed;
+  color: #a78bfa;
+}
+
+.basketball-path-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.basketball-path-editor__stroke--active {
+  stroke: #22d3ee;
+  stroke-width: 0.65;
+  opacity: 0.95;
+}
+
+.basketball-path-editor__stroke--idle {
+  stroke: rgba(148, 163, 184, 0.45);
+  stroke-width: 0.4;
+}
+
+.ink-splat-scroll-runway--short {
+  height: min(12vh, 80px);
+}
+
+.ink-bottle-pedestal__inner {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  line-height: 0;
+  transform: translateY(clamp(14px, 2.5vh, 28px));
+}
+
+.ink-bottle-pedestal__inner--placed {
+  transform: translate(-50%, -50%);
+}
+
+.ink-bottle-editor__toolbar {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0.75rem;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: min(100%, 20rem);
+  padding: 0.5rem 0.65rem;
+  border-radius: 0.75rem;
+  background: rgba(8, 8, 15, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
+}
+
+.ink-bottle-editor__status {
+  flex: 1 1 100%;
+  font-family: ui-monospace, monospace;
+  font-size: 0.62rem;
+  line-height: 1.35;
+  color: #94a3b8;
+}
+
+.ink-bottle-photo {
+  display: block;
+  width: clamp(150px, 40vw, 240px);
+  height: auto;
+  max-height: min(42vh, 320px);
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  will-change: transform;
+  filter: drop-shadow(0 10px 24px rgba(0, 0, 0, 0.35));
+}
+
+.ink-falling-drop {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  width: 18px;
+  height: 26px;
+  margin-left: -9px;
+  margin-top: -13px;
+  left: 0;
+  top: 0;
+}
+
+@media (max-width: 767px) {
+  .ink-splat-pour-block {
+    margin-top: 1.25rem;
+  }
+
+  .ink-bottle-slot {
+    min-height: clamp(180px, 32vh, 260px);
+  }
+
+  .ink-bottle-photo {
+    width: clamp(120px, 36vw, 190px);
+    max-height: min(36vh, 240px);
+  }
+
+  .ink-splat-scroll-runway {
+    height: min(36vh, 280px);
+  }
+}
+
+.cin-stage {
+  isolation: isolate;
+  will-change: transform;
+}
+
+/* —— Cards —— */
+.cin-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+}
+
+.cin-card--dark {
+  background: linear-gradient(145deg, rgb(18 18 24 / 0.95), rgb(8 8 12 / 0.98));
+  box-shadow: 0 32px 80px -24px rgb(0 0 0 / 0.9), inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+.cin-card--ember {
+  background: linear-gradient(160deg, rgb(28 12 8 / 0.96), rgb(12 8 8 / 0.98));
+  border-color: rgb(255 120 60 / 0.25);
+  box-shadow: 0 0 60px -12px rgb(255 90 40 / 0.35), 0 32px 80px -24px rgb(0 0 0 / 0.85);
+}
+
+.cin-card--ocean {
+  background: linear-gradient(155deg, rgb(8 20 32 / 0.96), rgb(6 12 20 / 0.98));
+  border-color: rgb(56 189 248 / 0.2);
+  box-shadow: 0 0 50px -16px rgb(14 165 233 / 0.3), 0 32px 80px -24px rgb(0 0 0 / 0.85);
+}
+
+.cin-card--smoke {
+  background: linear-gradient(150deg, rgb(22 22 26 / 0.94), rgb(10 10 12 / 0.98));
+  border-color: rgb(255 255 255 / 0.12);
+  box-shadow: 0 40px 90px -30px rgb(0 0 0 / 0.9), inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+.cin-card--light {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.cin-card__glow {
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgb(255 255 255 / 0.08), transparent 70%);
+}
+
+.cin-card--ember .cin-card__glow {
+  background: radial-gradient(ellipse 90% 50% at 50% 100%, rgb(255 100 40 / 0.2), transparent 65%);
+}
+
+.cin-card--ocean .cin-card__glow {
+  background: radial-gradient(ellipse 80% 55% at 50% 0%, rgb(56 189 248 / 0.15), transparent 70%);
+}
+
+.cin-card__lead {
+  font-size: clamp(1.05rem, 2.2vw, 1.2rem);
+  font-weight: 500;
+  line-height: 1.65;
+  letter-spacing: -0.02em;
+  color: rgb(248 250 252);
+  text-shadow: 0 0 40px rgb(255 255 255 / 0.08);
+}
+
+.cin-card--light .cin-card__lead,
+.cin-card--light .cin-card__body {
+  color: rgb(248 250 252);
+  text-shadow: 0 1px 24px rgb(0 0 0 / 0.4);
+}
+
+.cin-card__body {
+  font-size: clamp(0.92rem, 1.8vw, 1rem);
+  line-height: 1.75;
+  color: rgb(203 213 225 / 0.92);
+}
+
+/* —— Inferno —— */
+.cin-inferno {
+  background: #030201;
+}
+
+.cin-inferno-void {
+  background: radial-gradient(ellipse 120% 80% at 50% 100%, rgb(40 8 0 / 0.5), #030201 55%);
+}
+
+.cin-inferno-haze {
+  background: radial-gradient(circle at 50% 80%, rgb(255 80 20 / 0.12), transparent 55%);
+  filter: blur(40px);
+  mix-blend-mode: screen;
+}
+
+.cin-crack-line,
+.cin-crack-path {
+  stroke: rgb(255 140 40);
+  stroke-width: 2;
+  filter: drop-shadow(0 0 8px rgb(255 100 20 / 0.9));
+  stroke-linecap: round;
+}
+
+.cin-flame {
+  position: absolute;
+  bottom: 0;
+  width: 38%;
+  height: 72%;
+  opacity: 0;
+  filter: blur(2px);
+  mix-blend-mode: screen;
+  background: radial-gradient(ellipse 50% 100% at 50% 100%, rgb(255 220 120), rgb(255 90 20 / 0.6) 45%, transparent 72%);
+  mask-image: linear-gradient(to top, black 30%, transparent 100%);
+}
+
+.cin-flame--1 { left: 8%; width: 32%; }
+.cin-flame--2 { left: 34%; width: 36%; height: 85%; }
+.cin-flame--3 { right: 6%; width: 30%; }
+
+.cin-inferno-heat {
+  background: radial-gradient(circle at 50% 70%, rgb(255 120 40 / 0.25), transparent 50%);
+  filter: blur(24px) url("#cin-heat-noise");
+  mix-blend-mode: overlay;
+  animation: cin-heat-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes cin-heat-pulse {
+  0%, 100% { transform: scale(1) translateY(0); opacity: 0.4; }
+  50% { transform: scale(1.06) translateY(-2%); opacity: 0.7; }
+}
+
+.cin-inferno-veil {
+  background: linear-gradient(180deg, #030201 0%, rgb(20 6 2) 40%, rgb(60 18 4) 100%);
+  box-shadow: inset 0 -80px 120px rgb(255 80 20 / 0.15);
+}
+
+/* —— Tide —— */
+.cin-tide {
+  background: #020810;
+}
+
+.cin-tide-depth {
+  background: linear-gradient(180deg, #010408 0%, #041828 45%, #062a40 100%);
+}
+
+.cin-tide-caustics {
+  background-image: repeating-radial-gradient(
+    circle at 20% 30%,
+    rgb(125 211 252 / 0.08) 0 2px,
+    transparent 2px 24px
+  );
+  animation: cin-caustics-drift 8s linear infinite;
+  mix-blend-mode: screen;
+  opacity: 0;
+}
+
+@keyframes cin-caustics-drift {
+  from { transform: translate(0, 0) scale(1.1); }
+  to { transform: translate(-8%, -4%) scale(1.15); }
+}
+
+.cin-tide-surface {
+  background: linear-gradient(180deg, transparent 0%, rgb(14 116 144 / 0.35) 40%, rgb(8 47 73 / 0.85) 100%);
+  border-top: 1px solid rgb(125 211 252 / 0.25);
+  box-shadow: 0 -20px 60px rgb(56 189 248 / 0.15);
+}
+
+.cin-tide-wave {
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgb(186 230 253 / 0.15) 35%,
+    rgb(224 242 254 / 0.55) 50%,
+    rgb(56 189 248 / 0.35) 65%,
+    transparent 100%
+  );
+  filter: blur(1px);
+  mix-blend-mode: screen;
+}
+
+.cin-tide-drain {
+  background: linear-gradient(180deg, rgb(2 8 16 / 0.97) 0%, rgb(2 12 22 / 0.92) 35%, transparent 100%);
+}
+
+/* —— Ink (sprite bleed — CodyHouse-style steps() sheet) —— */
+.cin-ink-stage {
+  --cin-ink-fill-scale: 1.78;
+  isolation: isolate;
+  background: #000;
+}
+
+.cin-ink-drop {
+  top: 6%;
+  width: 10px;
+  height: 16px;
+  border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+  background: #0a0a0a;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
+}
+
+.cin-ink-drop--fall {
+  animation: cin-ink-drop-fall 0.52s cubic-bezier(0.55, 0.12, 0.9, 0.55) forwards;
+}
+
+@keyframes cin-ink-drop-fall {
+  to {
+    top: 86%;
+  }
+}
+
+.cin-ink-transition {
+  opacity: 1;
+  visibility: visible;
+  background: transparent;
+}
+
+.cin-ink-transition__media {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  background: transparent;
+  /* Source has white paper around ink — multiply onto black + zoom crops margins */
+  transform: scale(var(--cin-ink-fill-scale)) translateZ(0);
+  transform-origin: center center;
+  mix-blend-mode: multiply;
+  backface-visibility: hidden;
+}
+
+@media (max-width: 767px) {
+  .cin-ink-stage {
+    --cin-ink-fill-scale: 1.62;
+  }
+}
+
+.cin-ink-paper {
+  background: radial-gradient(circle at 50% 20%, #fff 0%, #f5f3ee 55%, #ebe8e0 100%);
+}
+
+.cin-ink-bloom {
+  width: min(280px, 70vw);
+  height: min(280px, 70vw);
+  border-radius: 50%;
+  background: radial-gradient(circle, #0a0a0a 0%, #0a0a0a 35%, transparent 68%);
+  filter: blur(1px);
+}
+
+.cin-ink-branch {
+  position: absolute;
+  bottom: 22%;
+  left: 50%;
+  width: 120px;
+  height: 4px;
+  background: #0a0a0a;
+  border-radius: 999px;
+  transform-origin: left center;
+}
+
+.cin-ink-branch--1 { transform: translate(-50%, 0) rotate(-42deg); width: 140px; }
+.cin-ink-branch--2 { transform: translate(-50%, 8px) rotate(28deg); width: 160px; }
+.cin-ink-branch--3 { transform: translate(-50%, -12px) rotate(-95deg); width: 100px; height: 3px; }
+.cin-ink-branch--4 { transform: translate(-50%, 16px) rotate(112deg); width: 90px; height: 3px; }
+
+.cin-ink-flood {
+  background: #0a0a0a;
+}
+
+.cin-ink-idle {
+  background: radial-gradient(ellipse 60% 40% at 50% 80%, rgb(0 0 0 / 0.08), transparent);
+  animation: cin-ink-breathe 6s ease-in-out infinite;
+}
+
+@keyframes cin-ink-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.25; }
+  50% { transform: scale(1.03); opacity: 0.35; }
+}
+
+/* —— Smoke —— */
+.cin-smoke {
+  background: #08080a;
+}
+
+.cin-smoke-void {
+  background: radial-gradient(ellipse 100% 80% at 50% 50%, rgb(30 30 34 / 0.4), #050506);
+}
+
+.cin-smoke-light {
+  background: radial-gradient(circle at 50% 35%, rgb(255 255 255 / 0.04), transparent 50%);
+}
+
+.cin-smoke-orb {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgb(220 220 225), rgb(100 100 110));
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.5), inset 0 -4px 12px rgb(0 0 0 / 0.2);
+  filter: blur(0.5px);
+}
+
+.cin-smoke-fog {
+  width: min(420px, 90vw);
+  height: min(420px, 90vw);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(180 180 190 / 0.5) 0%, rgb(80 80 90 / 0.2) 40%, transparent 70%);
+  filter: blur(48px);
+  mix-blend-mode: screen;
+}
+
+.cin-smoke-fog--b {
+  filter: blur(64px);
+  background: radial-gradient(circle, rgb(140 140 150 / 0.35) 0%, transparent 65%);
+}
+
+.cin-smoke-veil {
+  background: radial-gradient(ellipse 90% 70% at 50% 45%, rgb(20 20 24 / 0.2), rgb(5 5 8 / 0.95));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cin-inferno-heat,
+  .cin-tide-caustics,
+  .cin-ink-idle,
+  .cin-ink-drop--fall {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .cin-flame { height: 58%; }
+  .cin-smoke-fog { filter: blur(32px); }
+}
