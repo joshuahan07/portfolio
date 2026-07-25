@@ -74,6 +74,10 @@ export default function InkBloomSplatCard({
   const rippleRef = useRef({ radius: 0, opacity: 0 });
   const explosionRef = useRef({ progress: 0 });
   const phaseRef = useRef(0);
+  const playedPourTriggerRef = useRef(0);
+  const textRevealedRef = useRef(false);
+  /** Show About copy once the ink bloom is dark enough to read on. */
+  const INK_TEXT_REVEAL_PROGRESS = 0.28;
 
   const particlesRef = useRef<Particle[]>([]);
   const splatStreaksRef = useRef<SplatStreak[]>([]);
@@ -548,19 +552,29 @@ export default function InkBloomSplatCard({
       generateSplatStreaks();
     }, [], impact);
 
+    const revealAboutText = () => {
+      if (textRevealedRef.current) return;
+      textRevealedRef.current = true;
+      revealInstant();
+    };
+
     tl.to(explosion, {
       progress: 1,
-      duration: 3.5,
+      duration: 2.1,
       ease: "power1.out",
       onStart: () => {
         phaseRef.current = 2;
       },
+      onUpdate() {
+        if (explosion.progress >= INK_TEXT_REVEAL_PROGRESS) {
+          revealAboutText();
+        }
+      },
       onComplete: () => {
         phaseRef.current = 4;
+        revealAboutText();
       },
     }, impact);
-
-    tl.call(() => revealInstant(), [], impact + 2.5);
 
     return tl;
   }, [waitForPour, generateTendrils, generateParticles, generateSplatStreaks, revealInstant]);
@@ -576,12 +590,14 @@ export default function InkBloomSplatCard({
     splatStreaksRef.current = [];
     particlesRef.current = [];
     phaseRef.current = 0;
+    textRevealedRef.current = false;
     generateTendrils();
     render();
   }, [reset, resizeCanvas, generateTendrils, render]);
 
   const runSequence = useCallback(() => {
     reset();
+    textRevealedRef.current = false;
     resizeCanvas();
 
     if (reduced) {
@@ -637,9 +653,12 @@ export default function InkBloomSplatCard({
   useEffect(() => {
     if (waitForPour) {
       if (pourTrigger === 0) {
+        playedPourTriggerRef.current = 0;
         resetIdle();
         return;
       }
+      if (playedPourTriggerRef.current === pourTrigger) return;
+      playedPourTriggerRef.current = pourTrigger;
       runSequence();
       return;
     }

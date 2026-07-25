@@ -50,8 +50,9 @@ export function flipProgressFromCard(cardRevealProgress: number): number {
   return clamp01((p - FLIP_SCROLL_START) / (FLIP_SCROLL_END - FLIP_SCROLL_START));
 }
 
-export function shouldPourFromCard(cardRevealProgress: number): boolean {
-  return cardRevealProgress >= FLIP_SCROLL_END - 0.01;
+/** Start ink pour as soon as the bottle has finished its 180° flip. */
+export function shouldPourFromFlip(flipProgress: number): boolean {
+  return clamp01(flipProgress) >= 0.995;
 }
 
 /**

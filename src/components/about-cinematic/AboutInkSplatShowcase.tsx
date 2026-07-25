@@ -21,7 +21,7 @@ import {
   computeBallPose,
   shouldHideBallAfterInk,
   flipProgressFromCard,
-  shouldPourFromCard,
+  shouldPourFromFlip,
 } from "./basketballScrollPhases";
 import {
   ensureShotSegment,
@@ -275,6 +275,10 @@ export default function AboutInkSplatShowcase() {
     setPourTrigger((t) => t + 1);
   }, []);
 
+  const handleInkReady = useCallback(() => {
+    setReplayVisible(true);
+  }, []);
+
   useEffect(() => {
     if (scrollFlip <= 0) {
       setKnocked(false);
@@ -286,11 +290,11 @@ export default function AboutInkSplatShowcase() {
     }
     setFlipProgress(scrollFlip);
 
-    if (shouldPourFromCard(cardReveal)) {
+    if (shouldPourFromFlip(scrollFlip)) {
       setDropping(true);
       triggerPour();
     }
-  }, [cardReveal, scrollFlip, triggerPour]);
+  }, [scrollFlip, triggerPour]);
 
   useEffect(() => {
     const master = masterRef.current;
@@ -573,7 +577,7 @@ export default function AboutInkSplatShowcase() {
                     waitForPour
                     pourTrigger={pourTrigger}
                     pourOrigin={pourOrigin}
-                    onReady={() => setReplayVisible(true)}
+                    onReady={handleInkReady}
                   />
                 </Suspense>
 

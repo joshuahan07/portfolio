@@ -4,9 +4,9 @@ import { defineConfig } from "vite"
 
 // https://vite.dev/config/
 export default defineConfig({
-  // Root-absolute asset URLs (`/projects/...`) need this for dev + most hosts.
-  // GitHub Project Pages: set to `'/your-repo-name/'` and redeploy.
-  base: '/',
+  // Custom domain (joshuahanportfolio.com) uses `/`.
+  // Project Pages only (joshuahan07.github.io/portfolio/) needs `/portfolio/`.
+  base: process.env.VITE_BASE || "/",
   plugins: [react()],
   server: {
     port: 3000,

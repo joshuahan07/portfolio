@@ -7,8 +7,10 @@ import "./about-cinematic.css";
 import App from "./App.tsx";
 import AboutPreview from "./pages/AboutPreview.tsx";
 
+const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, "") || undefined;
+
 createRoot(document.getElementById("root")!).render(
-  <BrowserRouter>
+  <BrowserRouter basename={routerBasename}>
     <Routes>
       <Route path="/" element={<App />} />
       <Route path="/about-preview" element={<AboutPreview />} />
