@@ -1,4 +1,5 @@
 import type { BallPose } from "./basketballKnockMath";
+import type { BottlePosition } from "./inkBottlePositionStorage";
 
 /** Share of bounce scroll used only for the gravity drop (rim → bounce path start). */
 export const SHOT_TO_BOUNCE_BLEND = 0.32;
@@ -58,6 +59,31 @@ export function scenePoseToViewport(
 
 export function easeDropT(t: number): number {
   return easeInCubic(clamp01(t));
+}
+
+/** Map bottle placement (journey stage %) into bounce/path scene %. */
+export function bottleInPathSpace(
+  bottle: BottlePosition,
+  pathRect: DOMRect,
+  stageEl: HTMLElement,
+): BottlePosition {
+  const stageRect = stageEl.getBoundingClientRect();
+  if (
+    pathRect.width <= 0 ||
+    pathRect.height <= 0 ||
+    stageRect.width <= 0 ||
+    stageRect.height <= 0
+  ) {
+    return bottle;
+  }
+
+  const bx = stageRect.left + bottle.x * stageRect.width;
+  const by = stageRect.top + bottle.y * stageRect.height;
+
+  return {
+    x: Math.max(0.05, Math.min(0.95, (bx - pathRect.left) / pathRect.width)),
+    y: Math.max(0.08, Math.min(0.95, (by - pathRect.top) / pathRect.height)),
+  };
 }
 
 /** Smooth drop after the basket — lerps viewport position between shot and bounce coord boxes. */

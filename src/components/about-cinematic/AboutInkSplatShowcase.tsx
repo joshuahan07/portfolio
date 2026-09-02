@@ -23,6 +23,7 @@ import {
   flipProgressFromCard,
   shouldPourFromFlip,
 } from "./basketballScrollPhases";
+import { bottleInPathSpace } from "./scenePoseToViewport";
 import {
   ensureShotSegment,
   loadPathDocument,
@@ -141,11 +142,28 @@ export default function AboutInkSplatShowcase() {
   );
   const showInkBottle = shotComplete && cardReveal >= CARD_BOUNCE_START - 0.05;
 
+  const bottleForBall =
+    bottleLocked && showInkBottle
+      ? (() => {
+          const stage = journeyStageRef.current;
+          if (bounceMotion.arcT <= 0 || !stage) return bottlePosition;
+
+          const pathRect =
+            frozenBounceCoordRectRef.current ??
+            bounceSceneRef.current?.getBoundingClientRect() ??
+            null;
+          if (!pathRect || pathRect.width <= 0 || pathRect.height <= 0) {
+            return bottlePosition;
+          }
+          return bottleInPathSpace(bottlePosition, pathRect, stage);
+        })()
+      : null;
+
   const ballPose = computeBallPose(
     pathDoc,
     shotProgress,
     bounceMotion,
-    bottleLocked && showInkBottle ? bottlePosition : null,
+    bottleForBall,
     cardReveal,
   );
 
@@ -209,8 +227,7 @@ export default function AboutInkSplatShowcase() {
   }, [shotProgress, cardReveal]);
 
   useLayoutEffect(() => {
-    const inBouncePhase = bounceMotion.fallT > 0 || bounceMotion.arcT > 0;
-    if (!inBouncePhase) {
+    if (bounceMotion.arcT <= 0) {
       frozenBounceCoordRectRef.current = null;
       frozenBounceDocumentRectRef.current = null;
       return;
@@ -228,11 +245,11 @@ export default function AboutInkSplatShowcase() {
         };
       }
     }
-  }, [bounceMotion.arcT, bounceMotion.fallT]);
+  }, [bounceMotion.arcT]);
 
   const useDocumentBall =
     shotComplete &&
-    (bounceMotion.fallT > 0 || bounceMotion.arcT > 0) &&
+    bounceMotion.arcT > 0 &&
     frozenBounceDocumentRectRef.current != null;
 
   const viewportBallPose = resolveViewportBallPose({
@@ -241,11 +258,11 @@ export default function AboutInkSplatShowcase() {
     motion: bounceMotion,
     cardRevealProgress: cardReveal,
     coordRect:
-      shotComplete && !useDocumentBall
-        ? frozenCoordRectRef.current
-        : frozenBounceCoordRectRef.current ?? frozenCoordRectRef.current,
+      bounceMotion.arcT > 0
+        ? frozenBounceCoordRectRef.current ?? frozenCoordRectRef.current
+        : frozenCoordRectRef.current,
     liveKnockSceneEl: knockSceneRef.current,
-    bottle: bottleLocked && showInkBottle ? bottlePosition : null,
+    bottle: bottleForBall,
   });
   const documentBallPose =
     useDocumentBall && frozenBounceDocumentRectRef.current
