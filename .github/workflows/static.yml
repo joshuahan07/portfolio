@@ -36,10 +36,8 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          # Root-absolute assets for the custom domain (joshuahanportfolio.com).
-          # If you only use https://joshuahan07.github.io/portfolio/ instead,
-          # change this to "/portfolio/" and also set BrowserRouter basename.
-          VITE_BASE: /
+          # Project Pages URL: https://joshuahan07.github.io/portfolio/
+          VITE_BASE: /portfolio/
 
       - name: Prepare Pages files
         run: |
