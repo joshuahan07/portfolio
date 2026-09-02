@@ -101,7 +101,11 @@ export default function AboutInkSplatShowcase() {
   );
   const [bottleLocked, setBottleLocked] = useState(() => {
     if (typeof window === "undefined") return false;
-    return window.localStorage.getItem("portfolio:ink-bottle-position-v1") != null;
+    if (window.localStorage.getItem("portfolio:ink-bottle-position-v1") != null) {
+      return true;
+    }
+    // Use the shipped default ink placement on the live site.
+    return !import.meta.env.DEV;
   });
   const [isMovingBottle, setIsMovingBottle] = useState(false);
   const [ballActive, setBallActive] = useState(false);

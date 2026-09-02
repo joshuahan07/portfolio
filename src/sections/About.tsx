@@ -51,7 +51,7 @@ const education: EducationEntry[] = [
 const experiences: ExperienceEntry[] = [
   {
     org: "McGraw Hill",
-    role: "Incoming Product Operations Intern",
+    role: "Product Operations Intern",
     dates: "May - August 2026",
     location: "Remote",
     logo: "logos/mcgraw-hill.png",

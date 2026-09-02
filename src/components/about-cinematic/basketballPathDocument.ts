@@ -1,4 +1,5 @@
 import type { PathPoint } from "./basketballPathStorage";
+import { PRODUCTION_PATH_DOCUMENT } from "./basketballDefaultPathDocument";
 import {
   flattenSegmentChain,
   normalizeAnchors,
@@ -96,24 +97,37 @@ function migrateLegacy(): PathDocument | null {
   }
 }
 
+function hasPlayablePath(doc: PathDocument): boolean {
+  return getFullAnimationPath(doc).length >= 2;
+}
+
+function withProductionDefaults(doc: PathDocument): PathDocument {
+  if (hasPlayablePath(doc)) return doc;
+  return PRODUCTION_PATH_DOCUMENT;
+}
+
 export function loadPathDocument(): PathDocument {
-  if (typeof window === "undefined") return createEmptyDocument();
+  if (typeof window === "undefined") return PRODUCTION_PATH_DOCUMENT;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      return migrateLegacy() ?? createEmptyDocument();
+      const legacy = migrateLegacy();
+      return withProductionDefaults(legacy ?? createEmptyDocument());
     }
     const parsed = JSON.parse(raw) as unknown;
-    if (typeof parsed !== "object" || parsed === null) return createEmptyDocument();
+    if (typeof parsed !== "object" || parsed === null) {
+      return PRODUCTION_PATH_DOCUMENT;
+    }
     const o = parsed as Record<string, unknown>;
     const shot = o.shot ? parseSegment(o.shot, "Shot") : null;
     const bouncesRaw = Array.isArray(o.bounces) ? o.bounces : [];
     const bounces = bouncesRaw
       .map((b, i) => parseSegment(b, `Bounce ${i + 1}`))
       .filter((s): s is PathSegment => s !== null);
-    return { version: 2, shot, bounces };
+    return withProductionDefaults({ version: 2, shot, bounces });
   } catch {
-    return migrateLegacy() ?? createEmptyDocument();
+    const legacy = migrateLegacy();
+    return withProductionDefaults(legacy ?? createEmptyDocument());
   }
 }
 
