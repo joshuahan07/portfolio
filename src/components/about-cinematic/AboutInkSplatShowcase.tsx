@@ -114,9 +114,11 @@ export default function AboutInkSplatShowcase() {
   const bloomFiredRef = useRef(false);
   const postShotScrollRawRef = useRef(0);
   const postShotStartRef = useRef<number | null>(null);
-  /** Screen box for path coords — captured at the rim (paths are drawn in the shot scene). */
+  /** Screen box for the shot path — captured at the rim. */
   const frozenCoordRectRef = useRef<DOMRect | null>(null);
-  const frozenKnockDocumentRectRef = useRef<{
+  /** Bounce paths render in the journey coord box — freeze when fall/arc starts. */
+  const frozenBounceCoordRectRef = useRef<DOMRect | null>(null);
+  const frozenBounceDocumentRectRef = useRef<{
     left: number;
     top: number;
     width: number;
@@ -179,6 +181,8 @@ export default function AboutInkSplatShowcase() {
   useEffect(() => {
     if (!shotComplete) {
       setArcStartCardReveal(null);
+      frozenBounceCoordRectRef.current = null;
+      frozenBounceDocumentRectRef.current = null;
       return;
     }
 
@@ -197,40 +201,62 @@ export default function AboutInkSplatShowcase() {
 
     if (shotProgress >= SHOT_DONE) {
       if (!frozenCoordRectRef.current) {
-        const rect = knock.getBoundingClientRect();
-        frozenCoordRectRef.current = rect;
-        frozenKnockDocumentRectRef.current = {
+        frozenCoordRectRef.current = knock.getBoundingClientRect();
+      }
+    } else if (shotProgress < 0.35) {
+      frozenCoordRectRef.current = null;
+    }
+  }, [shotProgress, cardReveal]);
+
+  useLayoutEffect(() => {
+    const inBouncePhase = bounceMotion.fallT > 0 || bounceMotion.arcT > 0;
+    if (!inBouncePhase) {
+      frozenBounceCoordRectRef.current = null;
+      frozenBounceDocumentRectRef.current = null;
+      return;
+    }
+    if (!frozenBounceDocumentRectRef.current) {
+      const scene = bounceSceneRef.current;
+      if (scene) {
+        const rect = scene.getBoundingClientRect();
+        frozenBounceCoordRectRef.current = rect;
+        frozenBounceDocumentRectRef.current = {
           left: rect.left + window.scrollX,
           top: rect.top + window.scrollY,
           width: rect.width,
           height: rect.height,
         };
       }
-    } else if (shotProgress < 0.35) {
-      frozenCoordRectRef.current = null;
-      frozenKnockDocumentRectRef.current = null;
     }
-  }, [shotProgress, cardReveal]);
+  }, [bounceMotion.arcT, bounceMotion.fallT]);
+
+  const useDocumentBall =
+    shotComplete &&
+    (bounceMotion.fallT > 0 || bounceMotion.arcT > 0) &&
+    frozenBounceDocumentRectRef.current != null;
 
   const viewportBallPose = resolveViewportBallPose({
     doc: pathDoc,
     shotProgress,
     motion: bounceMotion,
     cardRevealProgress: cardReveal,
-    coordRect: shotComplete ? frozenCoordRectRef.current : null,
+    coordRect:
+      shotComplete && !useDocumentBall
+        ? frozenCoordRectRef.current
+        : frozenBounceCoordRectRef.current ?? frozenCoordRectRef.current,
     liveKnockSceneEl: knockSceneRef.current,
     bottle: bottleLocked && showInkBottle ? bottlePosition : null,
   });
   const documentBallPose =
-    bounceMotion.arcT > 0 && frozenKnockDocumentRectRef.current
+    useDocumentBall && frozenBounceDocumentRectRef.current
       ? {
           ...ballPose,
           x:
-            frozenKnockDocumentRectRef.current.left +
-            (ballPose.x / 100) * frozenKnockDocumentRectRef.current.width,
+            frozenBounceDocumentRectRef.current.left +
+            (ballPose.x / 100) * frozenBounceDocumentRectRef.current.width,
           y:
-            frozenKnockDocumentRectRef.current.top +
-            (ballPose.y / 100) * frozenKnockDocumentRectRef.current.height,
+            frozenBounceDocumentRectRef.current.top +
+            (ballPose.y / 100) * frozenBounceDocumentRectRef.current.height,
         }
       : null;
 
@@ -300,7 +326,8 @@ export default function AboutInkSplatShowcase() {
           setShotProgress(0);
           setCardReveal(0);
           setArcStartCardReveal(null);
-          frozenKnockDocumentRectRef.current = null;
+          frozenBounceCoordRectRef.current = null;
+          frozenBounceDocumentRectRef.current = null;
           setPostShotScrollRaw(0);
           postShotScrollRawRef.current = 0;
           postShotStartRef.current = null;
@@ -342,12 +369,6 @@ export default function AboutInkSplatShowcase() {
           ) {
             const rect = knockSceneRef.current.getBoundingClientRect();
             frozenCoordRectRef.current = rect;
-            frozenKnockDocumentRectRef.current = {
-              left: rect.left + window.scrollX,
-              top: rect.top + window.scrollY,
-              width: rect.width,
-              height: rect.height,
-            };
           }
         },
       });
@@ -445,7 +466,8 @@ export default function AboutInkSplatShowcase() {
     setShotProgress(0);
     setCardReveal(0);
     setArcStartCardReveal(null);
-    frozenKnockDocumentRectRef.current = null;
+    frozenBounceCoordRectRef.current = null;
+    frozenBounceDocumentRectRef.current = null;
     setPostShotScrollRaw(0);
     postShotScrollRawRef.current = 0;
     postShotStartRef.current = null;
