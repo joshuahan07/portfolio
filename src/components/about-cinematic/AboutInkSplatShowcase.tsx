@@ -114,11 +114,9 @@ export default function AboutInkSplatShowcase() {
   const bloomFiredRef = useRef(false);
   const postShotScrollRawRef = useRef(0);
   const postShotStartRef = useRef<number | null>(null);
-  /** Screen box for path coords — captured at the rim so drop/bounce don't jump. */
+  /** Screen box for path coords — captured at the rim (paths are drawn in the shot scene). */
   const frozenCoordRectRef = useRef<DOMRect | null>(null);
-  /** Screen box for bounces — captured when Bounce 2 starts so scroll can't move it. */
-  const frozenBounceCoordRectRef = useRef<DOMRect | null>(null);
-  const frozenBounceDocumentRectRef = useRef<{
+  const frozenKnockDocumentRectRef = useRef<{
     left: number;
     top: number;
     width: number;
@@ -181,8 +179,6 @@ export default function AboutInkSplatShowcase() {
   useEffect(() => {
     if (!shotComplete) {
       setArcStartCardReveal(null);
-      frozenBounceCoordRectRef.current = null;
-      frozenBounceDocumentRectRef.current = null;
       return;
     }
 
@@ -201,56 +197,40 @@ export default function AboutInkSplatShowcase() {
 
     if (shotProgress >= SHOT_DONE) {
       if (!frozenCoordRectRef.current) {
-        frozenCoordRectRef.current = knock.getBoundingClientRect();
-      }
-    } else if (shotProgress < 0.35) {
-      frozenCoordRectRef.current = null;
-    }
-  }, [shotProgress, cardReveal]);
-
-  useLayoutEffect(() => {
-    if (bounceMotion.arcT <= 0) {
-      frozenBounceCoordRectRef.current = null;
-      frozenBounceDocumentRectRef.current = null;
-      return;
-    }
-    if (!frozenBounceCoordRectRef.current) {
-      const scene = bounceSceneRef.current;
-      if (scene) {
-        const rect = scene.getBoundingClientRect();
-        frozenBounceCoordRectRef.current = rect;
-        frozenBounceDocumentRectRef.current = {
+        const rect = knock.getBoundingClientRect();
+        frozenCoordRectRef.current = rect;
+        frozenKnockDocumentRectRef.current = {
           left: rect.left + window.scrollX,
           top: rect.top + window.scrollY,
           width: rect.width,
           height: rect.height,
         };
       }
+    } else if (shotProgress < 0.35) {
+      frozenCoordRectRef.current = null;
+      frozenKnockDocumentRectRef.current = null;
     }
-  }, [bounceMotion.arcT]);
+  }, [shotProgress, cardReveal]);
 
   const viewportBallPose = resolveViewportBallPose({
     doc: pathDoc,
     shotProgress,
     motion: bounceMotion,
     cardRevealProgress: cardReveal,
-    coordRect:
-      bounceMotion.arcT > 0
-        ? frozenBounceCoordRectRef.current ?? frozenCoordRectRef.current
-        : frozenCoordRectRef.current,
+    coordRect: shotComplete ? frozenCoordRectRef.current : null,
     liveKnockSceneEl: knockSceneRef.current,
     bottle: bottleLocked && showInkBottle ? bottlePosition : null,
   });
   const documentBallPose =
-    bounceMotion.arcT > 0 && frozenBounceDocumentRectRef.current
+    bounceMotion.arcT > 0 && frozenKnockDocumentRectRef.current
       ? {
           ...ballPose,
           x:
-            frozenBounceDocumentRectRef.current.left +
-            (ballPose.x / 100) * frozenBounceDocumentRectRef.current.width,
+            frozenKnockDocumentRectRef.current.left +
+            (ballPose.x / 100) * frozenKnockDocumentRectRef.current.width,
           y:
-            frozenBounceDocumentRectRef.current.top +
-            (ballPose.y / 100) * frozenBounceDocumentRectRef.current.height,
+            frozenKnockDocumentRectRef.current.top +
+            (ballPose.y / 100) * frozenKnockDocumentRectRef.current.height,
         }
       : null;
 
@@ -320,8 +300,7 @@ export default function AboutInkSplatShowcase() {
           setShotProgress(0);
           setCardReveal(0);
           setArcStartCardReveal(null);
-          frozenBounceCoordRectRef.current = null;
-          frozenBounceDocumentRectRef.current = null;
+          frozenKnockDocumentRectRef.current = null;
           setPostShotScrollRaw(0);
           postShotScrollRawRef.current = 0;
           postShotStartRef.current = null;
@@ -361,8 +340,14 @@ export default function AboutInkSplatShowcase() {
             knockSceneRef.current &&
             !frozenCoordRectRef.current
           ) {
-            frozenCoordRectRef.current =
-              knockSceneRef.current.getBoundingClientRect();
+            const rect = knockSceneRef.current.getBoundingClientRect();
+            frozenCoordRectRef.current = rect;
+            frozenKnockDocumentRectRef.current = {
+              left: rect.left + window.scrollX,
+              top: rect.top + window.scrollY,
+              width: rect.width,
+              height: rect.height,
+            };
           }
         },
       });
@@ -460,8 +445,7 @@ export default function AboutInkSplatShowcase() {
     setShotProgress(0);
     setCardReveal(0);
     setArcStartCardReveal(null);
-    frozenBounceCoordRectRef.current = null;
-    frozenBounceDocumentRectRef.current = null;
+    frozenKnockDocumentRectRef.current = null;
     setPostShotScrollRaw(0);
     postShotScrollRawRef.current = 0;
     postShotStartRef.current = null;

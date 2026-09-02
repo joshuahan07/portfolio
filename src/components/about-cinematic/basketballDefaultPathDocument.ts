@@ -1,8 +1,8 @@
 import type { PathDocument } from "./basketballPathDocument";
 
 /**
- * Shipped animation paths for production visitors (no dev path editor / localStorage).
- * Dev edits in localStorage still override when they include locked segments.
+ * Locked paths exported from the path editor (production default).
+ * Dev localStorage overrides when it already has locked segments.
  */
 export const PRODUCTION_PATH_DOCUMENT: PathDocument = {
   version: 2,
@@ -10,9 +10,14 @@ export const PRODUCTION_PATH_DOCUMENT: PathDocument = {
     id: "prod-shot",
     label: "Shot",
     anchors: [
-      { x: 0.84, y: 0.9 },
-      { x: 0.64, y: 0.54 },
-      { x: 0.41, y: 0.31 },
+      { x: 0.9283054896763393, y: 0.7846339652273367 },
+      { x: 0.8846990162660554, y: 0.6120534370522747 },
+      { x: 0.7969396339951657, y: 0.4584822187190403 },
+      { x: 0.6836286272321429, y: 0.34214457029216205 },
+      { x: 0.5479867117745536, y: 0.24619540632121611 },
+      { x: 0.3560791015625, y: 0.19962700898763241 },
+      { x: 0.17575945172991073, y: 0.2988451788564454 },
+      { x: 0.12747628348214285, y: 0.4334164098974915 },
     ],
     locked: true,
   },
@@ -21,8 +26,12 @@ export const PRODUCTION_PATH_DOCUMENT: PathDocument = {
       id: "prod-bounce-1",
       label: "Bounce 1",
       anchors: [
-        { x: 0.38, y: 0.2 },
-        { x: 0.42, y: 0.58 },
+        { x: 0.12747628348214285, y: 0.4334164098974915 },
+        { x: 0.12928553989955358, y: 0.6101529647962718 },
+        { x: 0.13095964704241073, y: 0.6825180734203361 },
+        { x: 0.13397216796875, y: 0.7501813743481193 },
+        { x: 0.13530186244419642, y: 0.8017770418483966 },
+        { x: 0.13530622209821427, y: 0.8550498886148121 },
       ],
       locked: true,
     },
@@ -30,8 +39,12 @@ export const PRODUCTION_PATH_DOCUMENT: PathDocument = {
       id: "prod-bounce-2",
       label: "Bounce 2",
       anchors: [
-        { x: 0.42, y: 0.58 },
-        { x: 0.56, y: 0.36 },
+        { x: 0.13530622209821427, y: 0.8550498886148121 },
+        { x: 0.15297081804966284, y: 0.8167542065164598 },
+        { x: 0.18058137744079342, y: 0.7911028913193289 },
+        { x: 0.217672375595704, y: 0.7863295419824807 },
+        { x: 0.24288614730553337, y: 0.81346962878932 },
+        { x: 0.25084141322544645, y: 0.8509614974266181 },
       ],
       locked: true,
     },
@@ -39,8 +52,12 @@ export const PRODUCTION_PATH_DOCUMENT: PathDocument = {
       id: "prod-bounce-3",
       label: "Bounce 3",
       anchors: [
-        { x: 0.56, y: 0.36 },
-        { x: 0.46, y: 0.64 },
+        { x: 0.25084141322544645, y: 0.8509614974266181 },
+        { x: 0.2593146947460144, y: 0.8225493789775439 },
+        { x: 0.27696010044642855, y: 0.806697621222079 },
+        { x: 0.30633544921875, y: 0.8005308933860243 },
+        { x: 0.32176426478794645, y: 0.8204393953619379 },
+        { x: 0.33430262974330355, y: 0.8484734681335939 },
       ],
       locked: true,
     },
@@ -48,8 +65,12 @@ export const PRODUCTION_PATH_DOCUMENT: PathDocument = {
       id: "prod-bounce-4",
       label: "Bounce 4",
       anchors: [
-        { x: 0.46, y: 0.64 },
-        { x: 0.58, y: 0.44 },
+        { x: 0.33430262974330355, y: 0.8484734681335939 },
+        { x: 0.34651158967527373, y: 0.8360856828944685 },
+        { x: 0.35965657178212124, y: 0.8289496156614595 },
+        { x: 0.3743177066005237, y: 0.8260900211447042 },
+        { x: 0.38798280122502377, y: 0.8312294551644613 },
+        { x: 0.3992222377232143, y: 0.8412739734211896 },
       ],
       locked: true,
     },
@@ -57,8 +78,10 @@ export const PRODUCTION_PATH_DOCUMENT: PathDocument = {
       id: "prod-bounce-5",
       label: "Bounce 5",
       anchors: [
-        { x: 0.58, y: 0.44 },
-        { x: 0.5, y: 0.54 },
+        { x: 0.3992222377232143, y: 0.8412739734211896 },
+        { x: 0.40991646902901785, y: 0.834147028448033 },
+        { x: 0.42009190150669645, y: 0.8320900299587747 },
+        { x: 0.4287196568080357, y: 0.8383421104292385 },
       ],
       locked: true,
     },

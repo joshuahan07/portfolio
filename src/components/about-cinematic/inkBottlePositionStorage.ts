@@ -2,7 +2,10 @@ export type BottlePosition = { x: number; y: number };
 
 const STORAGE_KEY = "portfolio:ink-bottle-position-v1";
 
-export const DEFAULT_BOTTLE_POSITION: BottlePosition = { x: 0.5, y: 0.54 };
+export const DEFAULT_BOTTLE_POSITION: BottlePosition = {
+  x: 0.49519566127232145,
+  y: 0.7929890158884566,
+};
 
 export function loadBottlePosition(): BottlePosition {
   if (typeof window === "undefined") return DEFAULT_BOTTLE_POSITION;
