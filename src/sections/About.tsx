@@ -52,7 +52,7 @@ const experiences: ExperienceEntry[] = [
   {
     org: "McGraw Hill",
     role: "Product Operations Intern",
-    dates: "May - August 2026",
+    dates: "June - August 2026",
     location: "Remote",
     logo: "logos/mcgraw-hill.png",
     logoAlt: "McGraw Hill",

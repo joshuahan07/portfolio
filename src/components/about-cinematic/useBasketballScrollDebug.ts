@@ -31,7 +31,6 @@ export type BasketballDebugSnapshot = {
   showBall: boolean;
   hasLockedPath: boolean;
   shotComplete: boolean;
-  bottleLocked: boolean;
 };
 
 export function useBasketballDebugLogger(
@@ -64,7 +63,6 @@ export function useBasketballDebugLogger(
       ballActive: snapshot.ballActive,
       showBall: snapshot.showBall,
       pathLocked: snapshot.hasLockedPath,
-      bottleLocked: snapshot.bottleLocked,
     });
   }, [enabled, snapshot]);
 }

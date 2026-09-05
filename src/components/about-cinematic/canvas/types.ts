@@ -12,4 +12,6 @@ export type CanvasConceptProps = {
   waitForPour?: boolean;
   /** Bottle mouth position relative to the card (0–1), used for scroll-pour */
   pourOrigin?: NormalizedPoint | null;
+  /** Fired once the full ink sequence (including text reveal) has finished playing */
+  onSequenceComplete?: () => void;
 };

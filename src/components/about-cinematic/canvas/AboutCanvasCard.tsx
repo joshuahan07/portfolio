@@ -33,7 +33,7 @@ const VARIANT_STYLES: Record<
     },
     accent: { width: 40, height: 1, background: "rgba(255,255,255,0.25)" },
     title: {
-      fontFamily: "Georgia, serif",
+      fontFamily: '"Comic Sans MS", "Comic Sans", cursive',
       fontSize: "clamp(1.5rem, 4vw, 2rem)",
       fontWeight: 700,
       color: "#f0ede8",
@@ -71,10 +71,10 @@ export default function AboutCanvasCard({
           visibility: opacity > 0 ? "visible" : "hidden",
         }}
       >
-        <div className="max-w-lg text-center">
+        <div className="max-w-lg text-center" style={{ fontFamily: '"Comic Sans MS", "Comic Sans", cursive' }}>
           <h1
             style={{
-              fontFamily: "Georgia, serif",
+              fontFamily: '"Comic Sans MS", "Comic Sans", cursive',
               fontSize: "clamp(1.5rem, 4vw, 2rem)",
               fontWeight: 700,
               color: "#ffffff",

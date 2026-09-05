@@ -13,17 +13,12 @@ import BasketballKnockScene from "./BasketballKnockScene";
 import BasketballBall from "./BasketballBall";
 import { getFullAnimationPath } from "./basketballPathDocument";
 import { resolveViewportBallPose } from "./basketballScrollPhases";
-import InkBottlePlacement from "./InkBottlePlacement";
 import {
   SHOT_DONE,
   CARD_BOUNCE_START,
   computeBounceMotion,
   computeBallPose,
-  shouldHideBallAfterInk,
-  flipProgressFromCard,
-  shouldPourFromFlip,
 } from "./basketballScrollPhases";
-import { bottleInPathSpace } from "./scenePoseToViewport";
 import {
   ensureShotSegment,
   loadPathDocument,
@@ -31,14 +26,6 @@ import {
   type PathDocument,
 } from "./basketballPathDocument";
 import { clearPathMathCache } from "./basketballPathMath";
-import {
-  DEFAULT_BOTTLE_POSITION,
-  loadBottlePosition,
-  saveBottlePosition,
-  type BottlePosition,
-} from "./inkBottlePositionStorage";
-import { mouthOriginInCard } from "./inkBottleGeometry";
-import type { NormalizedPoint } from "./canvas/types";
 import BasketballScrollDebugPanel from "./BasketballScrollDebugPanel";
 import {
   useBasketballScrollDebug,
@@ -76,43 +63,26 @@ export default function AboutInkSplatShowcase() {
   const journeyStageRef = useRef<HTMLDivElement>(null);
   const bounceSceneRef = useRef<HTMLDivElement>(null);
   const revealZoneRef = useRef<HTMLDivElement>(null);
-  const bottleWrapRef = useRef<HTMLDivElement>(null);
-  const cardRef = useRef<HTMLDivElement>(null);
 
   const [pathDoc, setPathDoc] = useState<PathDocument>(() =>
     ensureShotSegment(loadPathDocument()),
   );
-  const [playKey, setPlayKey] = useState(0);
+  const [playKey] = useState(0);
   const [shotProgress, setShotProgress] = useState(0);
   const [cardReveal, setCardReveal] = useState(0);
   const [postShotScrollRaw, setPostShotScrollRaw] = useState(0);
   const [arcStartCardReveal, setArcStartCardReveal] = useState<number | null>(
     null,
   );
-  const [knocked, setKnocked] = useState(false);
-  const [flipProgress, setFlipProgress] = useState(0);
-  const [dropping, setDropping] = useState(false);
   const [pourTrigger, setPourTrigger] = useState(0);
-  const [pourOrigin, setPourOrigin] = useState<NormalizedPoint | null>(null);
-  const [replayVisible, setReplayVisible] = useState(false);
   const [scrollHint, setScrollHint] = useState(true);
-
-  const [bottlePosition, setBottlePosition] = useState<BottlePosition>(() =>
-    loadBottlePosition(),
-  );
-  const [bottleLocked, setBottleLocked] = useState(() => {
-    if (typeof window === "undefined") return false;
-    if (window.localStorage.getItem("portfolio:ink-bottle-position-v1") != null) {
-      return true;
-    }
-    // Use the shipped default ink placement on the live site.
-    return !import.meta.env.DEV;
-  });
-  const [isMovingBottle, setIsMovingBottle] = useState(false);
+  const [scrollLocked, setScrollLocked] = useState(false);
   const [ballActive, setBallActive] = useState(false);
 
-  const knockedRef = useRef(false);
   const bloomFiredRef = useRef(false);
+  /** Only allow the pour once we've observed the card BELOW center — guards against
+   *  a refresh/deep-link landing already scrolled past it from firing immediately. */
+  const seenBelowCenterRef = useRef(false);
   const postShotScrollRawRef = useRef(0);
   const postShotStartRef = useRef<number | null>(null);
   /** Screen box for the shot path — captured at the rim. */
@@ -140,30 +110,11 @@ export default function AboutInkSplatShowcase() {
     postShotScroll,
     arcStartCardReveal,
   );
-  const showInkBottle = shotComplete && cardReveal >= CARD_BOUNCE_START - 0.05;
-
-  const bottleForBall =
-    bottleLocked && showInkBottle
-      ? (() => {
-          const stage = journeyStageRef.current;
-          if (bounceMotion.arcT <= 0 || !stage) return bottlePosition;
-
-          const pathRect =
-            frozenBounceCoordRectRef.current ??
-            bounceSceneRef.current?.getBoundingClientRect() ??
-            null;
-          if (!pathRect || pathRect.width <= 0 || pathRect.height <= 0) {
-            return bottlePosition;
-          }
-          return bottleInPathSpace(bottlePosition, pathRect, stage);
-        })()
-      : null;
-
   const ballPose = computeBallPose(
     pathDoc,
     shotProgress,
     bounceMotion,
-    bottleForBall,
+    null,
     cardReveal,
   );
 
@@ -174,14 +125,11 @@ export default function AboutInkSplatShowcase() {
       (postShotScroll > 0.008 ||
         bounceMotion.fallT > 0.008 ||
         bounceMotion.arcT > 0.008));
-  const ballHitInk =
-    bottleLocked && shouldHideBallAfterInk(cardReveal, bounceMotion, true);
   const showBall =
     ballActive &&
     hasLockedPath &&
     ballMoving &&
-    ballPose.visible &&
-    !ballHitInk;
+    ballPose.visible;
 
   const debugSnapshot = {
     shotProgress,
@@ -191,7 +139,6 @@ export default function AboutInkSplatShowcase() {
     showBall,
     hasLockedPath,
     shotComplete,
-    bottleLocked,
   };
 
   useBasketballDebugLogger(scrollDebug, debugSnapshot);
@@ -262,7 +209,7 @@ export default function AboutInkSplatShowcase() {
         ? frozenBounceCoordRectRef.current ?? frozenCoordRectRef.current
         : frozenCoordRectRef.current,
     liveKnockSceneEl: knockSceneRef.current,
-    bottle: bottleForBall,
+    bottle: null,
   });
   const documentBallPose =
     useDocumentBall && frozenBounceDocumentRectRef.current
@@ -277,8 +224,6 @@ export default function AboutInkSplatShowcase() {
         }
       : null;
 
-  const scrollFlip = flipProgressFromCard(cardReveal);
-
   const handleDocChange = useCallback((doc: PathDocument) => {
     clearPathMathCache();
     setPathDoc(doc);
@@ -292,36 +237,53 @@ export default function AboutInkSplatShowcase() {
 
   const triggerPour = useCallback(() => {
     if (bloomFiredRef.current) return;
-    const bottleEl = bottleWrapRef.current;
-    const cardEl = cardRef.current;
-    if (!bottleEl || !cardEl) return;
-
     bloomFiredRef.current = true;
     setScrollHint(false);
-    setPourOrigin(mouthOriginInCard(bottleEl, cardEl));
+    setScrollLocked(true);
     setPourTrigger((t) => t + 1);
   }, []);
 
-  const handleInkReady = useCallback(() => {
-    setReplayVisible(true);
+  const handleSequenceComplete = useCallback(() => {
+    setScrollLocked(false);
   }, []);
 
+  /** Freeze the page in place while the ink sequence plays. */
   useEffect(() => {
-    if (scrollFlip <= 0) {
-      setKnocked(false);
-      return;
-    }
-    if (!knockedRef.current) {
-      knockedRef.current = true;
-      setKnocked(true);
-    }
-    setFlipProgress(scrollFlip);
+    if (!scrollLocked) return;
 
-    if (shouldPourFromFlip(scrollFlip)) {
-      setDropping(true);
-      triggerPour();
-    }
-  }, [scrollFlip, triggerPour]);
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = body.style.overflow;
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+
+    const preventScroll = (e: Event) => e.preventDefault();
+    const scrollKeys = new Set([
+      "ArrowUp",
+      "ArrowDown",
+      "PageUp",
+      "PageDown",
+      "Home",
+      "End",
+      " ",
+    ]);
+    const preventScrollKeys = (e: KeyboardEvent) => {
+      if (scrollKeys.has(e.key)) e.preventDefault();
+    };
+
+    window.addEventListener("wheel", preventScroll, { passive: false });
+    window.addEventListener("touchmove", preventScroll, { passive: false });
+    window.addEventListener("keydown", preventScrollKeys, { passive: false });
+
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      body.style.overflow = prevBodyOverflow;
+      window.removeEventListener("wheel", preventScroll);
+      window.removeEventListener("touchmove", preventScroll);
+      window.removeEventListener("keydown", preventScrollKeys);
+    };
+  }, [scrollLocked]);
 
   useEffect(() => {
     const master = masterRef.current;
@@ -349,11 +311,9 @@ export default function AboutInkSplatShowcase() {
           postShotScrollRawRef.current = 0;
           postShotStartRef.current = null;
           frozenCoordRectRef.current = null;
-          knockedRef.current = false;
           bloomFiredRef.current = false;
-          setKnocked(false);
-          setFlipProgress(0);
-          setDropping(false);
+          seenBelowCenterRef.current = false;
+          setScrollLocked(false);
         },
       });
 
@@ -424,7 +384,9 @@ export default function AboutInkSplatShowcase() {
         });
       }
 
-      /* Card visibility: fall Bounce 1 ends at 34%; Bounces 2–5 + ink by 45% */
+      /* Card visibility: fall Bounce 1 ends at 34%; Bounces 2–5 + ink by 45%.
+         Progress 0.5 is exactly when the card is centered in the viewport
+         (true regardless of card height for a "top bottom" -> "bottom top" trigger). */
       if (revealZone) {
         ScrollTrigger.create({
           id: "basketball-card-reveal",
@@ -433,7 +395,19 @@ export default function AboutInkSplatShowcase() {
           end: "bottom top",
           scrub: 0.55,
           invalidateOnRefresh: true,
-          onUpdate: (self) => setCardReveal(self.progress),
+          onUpdate: (self) => {
+            setCardReveal(self.progress);
+            if (self.progress < 0.5) {
+              seenBelowCenterRef.current = true;
+            }
+            if (
+              self.progress >= 0.5 &&
+              seenBelowCenterRef.current &&
+              !bloomFiredRef.current
+            ) {
+              triggerPour();
+            }
+          },
         });
       }
     });
@@ -450,56 +424,6 @@ export default function AboutInkSplatShowcase() {
       window.removeEventListener("load", refresh);
     };
   }, [pathDoc.shot?.locked, pathDoc.bounces.length]);
-
-  const handleBottlePositionChange = useCallback(
-    (pos: BottlePosition) => {
-      setBottlePosition(pos);
-      if (bottleLocked) saveBottlePosition(pos);
-    },
-    [bottleLocked],
-  );
-
-  const handleStartMoveBottle = useCallback(() => {
-    setIsMovingBottle((v) => !v);
-  }, []);
-
-  const handleLockBottle = useCallback(() => {
-    saveBottlePosition(bottlePosition);
-    setBottleLocked(true);
-    setIsMovingBottle(false);
-  }, [bottlePosition]);
-
-  const handleResetBottle = useCallback(() => {
-    setBottlePosition(DEFAULT_BOTTLE_POSITION);
-    setBottleLocked(false);
-    setIsMovingBottle(false);
-  }, []);
-
-  const replay = useCallback(() => {
-    setReplayVisible(false);
-    knockedRef.current = false;
-    bloomFiredRef.current = false;
-    setKnocked(false);
-    setShotProgress(0);
-    setCardReveal(0);
-    setArcStartCardReveal(null);
-    frozenBounceCoordRectRef.current = null;
-    frozenBounceDocumentRectRef.current = null;
-    setPostShotScrollRaw(0);
-    postShotScrollRawRef.current = 0;
-    postShotStartRef.current = null;
-    frozenCoordRectRef.current = null;
-    setDropping(false);
-    setFlipProgress(0);
-    setPourOrigin(null);
-    setPourTrigger(0);
-    setScrollHint(true);
-
-    requestAnimationFrame(() => {
-      setPlayKey((k) => k + 1);
-      ScrollTrigger.refresh();
-    });
-  }, []);
 
   return (
     <div
@@ -568,72 +492,22 @@ export default function AboutInkSplatShowcase() {
               className="basketball-knock-scene basketball-knock-scene--bounce-coords"
               aria-hidden
             />
-
-            {(showInkBottle || showEditor) && (
-              <InkBottlePlacement
-                stageRef={journeyStageRef}
-                bottleWrapRef={bottleWrapRef}
-                visible={showInkBottle || showEditor}
-                position={bottlePosition}
-                isLocked={bottleLocked}
-                isMoving={isMovingBottle}
-                flipProgress={flipProgress}
-                dropping={dropping}
-                knocked={knocked}
-                showEditor={showEditor}
-                onStartMove={handleStartMoveBottle}
-                onLock={handleLockBottle}
-                onReset={handleResetBottle}
-                onPositionChange={handleBottlePositionChange}
-              />
-            )}
           </div>
         </div>
 
         <div ref={revealZoneRef} className="ink-splat-pour-block mx-auto max-w-4xl">
           <div className="cin-showcase about-me-card">
             <div className="cin-showcase__stage-wrap cin-showcase__stage-wrap--pour">
-              <div
-                ref={cardRef}
-                className="relative min-h-[min(580px,82vh)] w-full bg-white"
-              >
+              <div className="relative min-h-[min(580px,82vh)] w-full bg-white">
                 <Suspense fallback={<StageFallback />}>
                   <InkBloomSplatCard
                     key={playKey}
                     playKey={playKey}
                     waitForPour
                     pourTrigger={pourTrigger}
-                    pourOrigin={pourOrigin}
-                    onReady={handleInkReady}
+                    onSequenceComplete={handleSequenceComplete}
                   />
                 </Suspense>
-
-                <div
-                  className="absolute right-4 top-4 z-50 sm:right-6 sm:top-6"
-                  style={{
-                    opacity: replayVisible ? 1 : 0,
-                    transition: "opacity 0.4s ease",
-                    pointerEvents: replayVisible ? "auto" : "none",
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={replay}
-                    className="cin-showcase__replay cin-showcase__replay--on-light"
-                    aria-label="Replay animation"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
-                      <path
-                        d="M10 6A4 4 0 1 1 6 2V0L9 3L6 6V4A2 2 0 1 0 8 6"
-                        stroke="currentColor"
-                        strokeWidth="1.2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    Replay
-                  </button>
-                </div>
               </div>
             </div>
           </div>

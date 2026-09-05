@@ -51,6 +51,7 @@ export default function InkBloomSplatCard({
   pourTrigger = 0,
   waitForPour = false,
   pourOrigin = null,
+  onSequenceComplete,
 }: CanvasConceptProps) {
   const pourOriginRef = useRef(pourOrigin);
   pourOriginRef.current = pourOrigin;
@@ -446,7 +447,7 @@ export default function InkBloomSplatCard({
     const { x: cx, y: cy } = centerRef.current;
     const origin = waitForPour ? pourOriginRef.current : null;
     const fromBottle = Boolean(origin && origin.x >= 0 && origin.y >= 0);
-    const fallDur = fromBottle ? 1.1 : 2.5;
+    const fallDur = fromBottle ? 1.1 : 0.9;
     const impact = fallDur;
 
     let impactX = cx;
@@ -573,11 +574,12 @@ export default function InkBloomSplatCard({
       onComplete: () => {
         phaseRef.current = 4;
         revealAboutText();
+        onSequenceComplete?.();
       },
     }, impact);
 
     return tl;
-  }, [waitForPour, generateTendrils, generateParticles, generateSplatStreaks, revealInstant]);
+  }, [waitForPour, generateTendrils, generateParticles, generateSplatStreaks, revealInstant, onSequenceComplete]);
 
   const resetIdle = useCallback(() => {
     reset();
@@ -607,11 +609,21 @@ export default function InkBloomSplatCard({
       generateTendrils();
       render();
       revealInstant();
+      onSequenceComplete?.();
       return;
     }
 
     setupTimeline();
-  }, [reduced, reset, resizeCanvas, setupTimeline, generateTendrils, render, revealInstant]);
+  }, [
+    reduced,
+    reset,
+    resizeCanvas,
+    setupTimeline,
+    generateTendrils,
+    render,
+    revealInstant,
+    onSequenceComplete,
+  ]);
 
   useEffect(() => {
     isMobileRef.current = window.innerWidth < 768 || "ontouchstart" in window;
