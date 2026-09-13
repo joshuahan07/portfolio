@@ -18,7 +18,7 @@ type EducationEntry = {
 
 type ExperienceEntry = {
   org: string;
-  role: string;
+  role: string | string[];
   dates: string;
   location: string;
   logo: string;
@@ -31,7 +31,7 @@ const education: EducationEntry[] = [
   {
     title: "Washington University in St. Louis",
     subtitle:
-      "Joint Business & Computer Science Program (B.S.) · GPA: 3.84",
+      "Joint Business & Computer Science Program (B.S.)",
     meta: "Aug 2025 - May 2029",
     color: "bg-violet-500",
     logo: "logos/washu.png",
@@ -76,8 +76,8 @@ const experiences: ExperienceEntry[] = [
   },
   {
     org: "Google Developer Group in WashU",
-    role: "Project Management Lead",
-    dates: "January - August 2026",
+    role: ["Vice President", "Project Management Lead"],
+    dates: "January 2026 - Present",
     location: "St. Louis, MO",
     logo: "logos/gdg.png",
     logoAlt: "Google Developer Groups",
@@ -93,7 +93,7 @@ const experiences: ExperienceEntry[] = [
   {
     org: "City of West Hollywood",
     role: "Recreation Leader",
-    dates: "May - June 2025",
+    dates: "May - July 2025",
     location: "West Hollywood, CA",
     logo: "logos/west-hollywood.png",
     logoAlt: "City of West Hollywood",
@@ -260,7 +260,7 @@ export default function About() {
 
             return (
               <div
-                key={`${job.org}-${job.role}`}
+                key={job.org}
                 ref={(el) => {
                   itemRefs.current[i] = el;
                 }}
@@ -302,9 +302,18 @@ export default function About() {
                       <h4 className="text-xl font-bold leading-tight tracking-tight text-white sm:text-[1.35rem]">
                         {job.org}
                       </h4>
-                      <p className="mt-3 inline-flex rounded-lg bg-violet-500/15 px-3 py-1 text-sm font-medium text-violet-100 ring-1 ring-violet-400/25">
-                        {job.role}
-                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {(Array.isArray(job.role) ? job.role : [job.role]).map(
+                          (role) => (
+                            <p
+                              key={role}
+                              className="inline-flex rounded-lg bg-violet-500/15 px-3 py-1 text-sm font-medium text-violet-100 ring-1 ring-violet-400/25"
+                            >
+                              {role}
+                            </p>
+                          ),
+                        )}
+                      </div>
                     </div>
                   </article>
                 </div>
