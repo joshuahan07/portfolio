@@ -165,6 +165,11 @@ export default function OrbProjectReveal({ children }: OrbProjectRevealProps) {
             phase === "striking" || phase === "exploding" ? "pointer-events-none" : ""
           }`}
         >
+          <div
+            className="mb-10 h-px w-40 bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"
+            aria-hidden
+          />
+
           <div className="relative flex h-[280px] w-[280px] items-center justify-center sm:h-[300px] sm:w-[300px]">
             {showArrows
               ? ARROWS.map(({ Icon, className: arrowClass }) => (
@@ -212,6 +217,11 @@ export default function OrbProjectReveal({ children }: OrbProjectRevealProps) {
               Click to see my work
             </p>
           ) : null}
+
+          <div
+            className="mt-10 h-px w-40 bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"
+            aria-hidden
+          />
         </div>
       ) : null}
 

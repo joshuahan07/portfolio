@@ -210,30 +210,39 @@ export default function About() {
       <h3 className="mb-4 text-center font-mono text-[11px] font-semibold uppercase tracking-[0.4em] text-slate-500">
         Education
       </h3>
-      <div className="mb-14 grid gap-5 sm:grid-cols-2 md:mb-16">
-        {education.map((edu) => {
+      <div className="relative mb-14 grid gap-5 sm:grid-cols-2 md:mb-16">
+        <div
+          className="pointer-events-none absolute inset-y-6 left-1/2 hidden w-px -translate-x-1/2 bg-gradient-to-b from-violet-400 via-fuchsia-400 to-cyan-400 opacity-60 sm:block"
+          aria-hidden
+        />
+        {education.map((edu, i) => {
           return (
-            <div
-              key={edu.title}
-              className="education-card group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.09] to-white/[0.02] p-6 shadow-xl shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:border-violet-400/25 hover:shadow-[0_20px_60px_-24px_rgba(167,139,250,0.35)]"
-            >
-              <div
-                className={`absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${edu.color}/10`}
-                aria-hidden
-              />
-              <span className="education-logo relative mb-5">
-                <img
-                  src={publicUrl(edu.logo, { bustCache: true })}
-                  alt={edu.logoAlt}
-                  loading="lazy"
-                  decoding="async"
+            <div key={edu.title} className="contents">
+              {i > 0 ? (
+                <div
+                  className="mx-auto h-px w-24 bg-gradient-to-r from-transparent via-fuchsia-400 to-transparent opacity-70 sm:hidden"
+                  aria-hidden
                 />
-              </span>
-              <h4 className="relative text-lg font-bold tracking-tight text-white">{edu.title}</h4>
-              <p className="relative mt-2 text-sm leading-relaxed text-slate-400">{edu.subtitle}</p>
-              <p className="relative mt-4 font-mono text-[11px] tracking-wide text-violet-300/90">
-                {edu.meta}
-              </p>
+              ) : null}
+              <div className="education-card group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.09] to-white/[0.02] p-6 shadow-xl shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:border-violet-400/25 hover:shadow-[0_20px_60px_-24px_rgba(167,139,250,0.35)]">
+                <div
+                  className={`absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${edu.color}/10`}
+                  aria-hidden
+                />
+                <span className="education-logo relative mb-5">
+                  <img
+                    src={publicUrl(edu.logo, { bustCache: true })}
+                    alt={edu.logoAlt}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </span>
+                <h4 className="relative text-lg font-bold tracking-tight text-white">{edu.title}</h4>
+                <p className="relative mt-2 text-sm leading-relaxed text-slate-400">{edu.subtitle}</p>
+                <p className="relative mt-4 font-mono text-[11px] tracking-wide text-violet-300/90">
+                  {edu.meta}
+                </p>
+              </div>
             </div>
           );
         })}

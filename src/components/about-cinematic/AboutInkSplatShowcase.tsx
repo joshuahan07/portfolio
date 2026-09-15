@@ -75,7 +75,6 @@ export default function AboutInkSplatShowcase() {
     null,
   );
   const [pourTrigger, setPourTrigger] = useState(0);
-  const [scrollHint, setScrollHint] = useState(true);
   const [scrollLocked, setScrollLocked] = useState(false);
   const [ballActive, setBallActive] = useState(false);
 
@@ -238,7 +237,6 @@ export default function AboutInkSplatShowcase() {
   const triggerPour = useCallback(() => {
     if (bloomFiredRef.current) return;
     bloomFiredRef.current = true;
-    setScrollHint(false);
     setScrollLocked(true);
     setPourTrigger((t) => t + 1);
   }, []);
@@ -439,14 +437,6 @@ export default function AboutInkSplatShowcase() {
       {scrollDebug ? (
         <BasketballScrollDebugPanel snapshot={debugSnapshot} />
       ) : null}
-
-      {scrollHint && ballActive && pourTrigger === 0 && (
-        <p className="ink-splat-scroll-hint mb-2 text-center font-mono text-[10px] tracking-[0.2em] text-slate-500">
-          {showEditor
-            ? "Lock Shot + Bounces · scroll sinks the shot (page holds), then journey scrolls ink + card"
-            : "Scroll — sink the shot, bounce to the ink, spill your story"}
-        </p>
-      )}
 
       {showEditor ? (
         <div className="mx-auto mb-2 flex flex-wrap items-center justify-center gap-3">

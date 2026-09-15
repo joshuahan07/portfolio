@@ -34,6 +34,10 @@ const links = [
 export default function Connect() {
   return (
     <section id="connect" className="relative px-6 py-16 md:py-24">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent"
+        aria-hidden
+      />
       <div className="pointer-events-none absolute inset-0 z-0">
         <div className="absolute bottom-10 left-[20%] h-72 w-72 rounded-full bg-violet-600/15 blur-[100px]" />
       </div>

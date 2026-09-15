@@ -21,7 +21,7 @@ function cardFromProject(p: Project, featured = false): CardProject {
   return {
     slug: p.slug,
     title: p.title,
-    description: `${p.tagline} · ${p.role}`,
+    description: [p.tagline, p.role].filter(Boolean).join(" · "),
     cover: p.cover,
     tags: p.stack.slice(0, 4),
     featured,
