@@ -50,22 +50,38 @@ export default function SkillTuner({
       p: 0.08 + (i / Math.max(1, items.length - 1)) * 0.84,
     }));
 
-    // The needle steps station to station, freezing on each one (fully
-    // locked, no glyph noise) for HOLD_MS before it moves on and the next
-    // word starts decoding. It ping-pongs back and forth across the band
-    // rather than snapping from the last station back to the first.
-    const HOLD_MS = 1500;
-    const travelMs = Math.max(300, (sweepSeconds * 1000) / Math.max(1, stations.length - 1));
-    const pingpong: number[] = [];
-    for (let i = 0; i < stations.length; i++) pingpong.push(i);
-    for (let i = stations.length - 2; i > 0; i--) pingpong.push(i);
-    if (pingpong.length < 2) pingpong.push(0);
+    // The needle keeps sweeping continuously (10% faster than the previous
+    // pace). Once it sweeps through a station's lock zone, that word holds
+    // at full lock — no glyph noise — for HOLD_MS even as the needle moves
+    // on, instead of decaying the instant the needle drifts away.
+    const period = (sweepSeconds * 1000) / 1.012;
+    const HOLD_MS = 1200;
+    // How close counts as "passed over": wide enough that at least a few
+    // animation frames land inside it as the needle sweeps through (an
+    // exact-instant threshold like 0.999 could get skipped between frames
+    // and never arm the hold at all).
+    const LOCK_ZONE = 0.85;
+    const holdUntil = new Array(stations.length).fill(0);
+    // How long the word takes to ease from fully-lit back down into the
+    // noise once the hold ends, instead of snapping instantly.
+    const RELEASE_FADE_MS = 450;
+
+    // The glyph scramble only re-rolls every FLICKER_MS instead of every
+    // frame, so it reads as a deliberate decode instead of a fast blur.
+    const FLICKER_MS = 90;
+    const lastFlicker = new Array(stations.length).fill(0);
+    const cachedTxt = stations.map((s) => s.word.toUpperCase());
 
     let w = 0;
     const h = height;
     let raf = 0;
     let mouseX = -9999;
     let over = false;
+    // The sweep's phase is timed from whenever this component first draws,
+    // not from absolute page-load time — otherwise the needle would appear
+    // wherever the sine curve happened to land when the strip faded in,
+    // instead of always starting at the left edge and sweeping rightward.
+    let startT = 0;
 
     const resize = () => {
       const rect = cv.getBoundingClientRect();
@@ -93,25 +109,16 @@ export default function SkillTuner({
     const draw = (now: number) => {
       ctx.clearRect(0, 0, w, h);
 
-      const segDur = HOLD_MS + travelMs;
-      const cycle = pingpong.length * segDur;
-      const t = now % cycle;
-      const segIdx = Math.floor(t / segDur);
-      const segT = t - segIdx * segDur;
-      const curP = stations[pingpong[segIdx]].p;
-      const nextP = stations[pingpong[(segIdx + 1) % pingpong.length]].p;
-      let autoNeedle = curP;
-      if (segT >= HOLD_MS) {
-        const travelT = Math.min(1, (segT - HOLD_MS) / travelMs);
-        const eased = travelT < 0.5 ? 2 * travelT * travelT : 1 - Math.pow(-2 * travelT + 2, 2) / 2;
-        autoNeedle = curP + (nextP - curP) * eased;
-      }
-
+      if (!startT) startT = now;
+      const elapsed = now - startT;
+      const phase = (elapsed % period) / period;
+      // shifted so phase 0 sits at the leftmost point of the sweep — the
+      // needle starts at the start and sweeps rightward first.
       const needle = over
         ? Math.max(0.03, Math.min(0.97, mouseX / w))
         : reduced
         ? 0.5
-        : autoNeedle;
+        : 0.5 + 0.47 * Math.sin(phase * Math.PI * 2 - Math.PI / 2);
       const nx = needle * w;
 
       // ruler
@@ -154,17 +161,33 @@ export default function SkillTuner({
       // stations resolve as the needle closes in
       ctx.font = '600 12px ui-monospace, Menlo, Consolas, monospace';
       ctx.textAlign = "center";
-      for (const st of stations) {
-        const lock = reduced ? 1 : Math.max(0, 1 - Math.abs(st.p - needle) / 0.085);
+      stations.forEach((st, idx) => {
+        const rawLock = reduced ? 1 : Math.max(0, 1 - Math.abs(st.p - needle) / 0.085);
+        const inZone = rawLock >= LOCK_ZONE;
+        if (inZone) holdUntil[idx] = now + HOLD_MS;
+
+        let lock: number;
+        if (inZone || now < holdUntil[idx]) {
+          lock = 1;
+        } else {
+          // ease the release out instead of snapping straight to rawLock —
+          // it fades from fully-lit back down into the noise.
+          const sinceRelease = now - holdUntil[idx];
+          const fadeT = Math.min(1, sinceRelease / RELEASE_FADE_MS);
+          lock = 1 + (rawLock - 1) * fadeT;
+        }
+
         const x = st.p * w;
         const upper = st.word.toUpperCase();
-        const txt = reduced
-          ? upper
-          : [...upper]
-              .map((c, i) =>
-                i / upper.length < lock ? c : GLYPHS[(Math.random() * GLYPHS.length) | 0]
-              )
-              .join("");
+        if (reduced) {
+          cachedTxt[idx] = upper;
+        } else if (now - lastFlicker[idx] > FLICKER_MS) {
+          lastFlicker[idx] = now;
+          cachedTxt[idx] = [...upper]
+            .map((c, i) => (i / upper.length < lock ? c : GLYPHS[(Math.random() * GLYPHS.length) | 0]))
+            .join("");
+        }
+        const txt = cachedTxt[idx];
 
         ctx.globalAlpha = 0.18 + lock * 0.82;
         ctx.fillStyle = lock > 0.8 ? COL.core : COL.rim;
@@ -175,7 +198,7 @@ export default function SkillTuner({
         ctx.fillStyle = lock > 0.8 ? "#fff" : "rgba(34,211,238,.6)";
         const markH = 3 + lock * 9;
         ctx.fillRect(x - 1, rulerY - markH, 2, markH);
-      }
+      });
 
       // needle — a green radar-style sweep line
       ctx.save();
