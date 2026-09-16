@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
 import SkillTuner from "@/components/SkillTuner";
 import ElectricNameIntro from "@/components/ElectricNameIntro";
 import SignalLock from "@/components/SignalLock";
@@ -32,8 +31,8 @@ class Particle {
     }
     this.x = x
     this.y = y
-    this.vx = (Math.random() - 0.5) * 0.5
-    this.vy = (Math.random() - 0.5) * 0.5
+    this.vx = (Math.random() - 0.5) * 0.18
+    this.vy = (Math.random() - 0.5) * 0.18
     this.radius = Math.random() * 2 + 1
   }
 
@@ -383,7 +382,8 @@ export default function Hero() {
             <SignalLock
               text="Developer · Founder · Student"
               delayMs={100}
-              className="text-xl sm:text-2xl md:text-3xl text-slate-400 font-light tracking-wide"
+              className="text-xl sm:text-2xl md:text-3xl text-slate-400 tracking-wide"
+              style={{ fontFamily: '"Arial Black", "Helvetica Neue", Impact, sans-serif', fontWeight: 900 }}
             />
           ) : null}
         </div>
@@ -418,12 +418,9 @@ export default function Hero() {
         <div
           className={`hero-bottom mt-auto flex w-full shrink-0 flex-col items-center gap-2 transition-all duration-1000 delay-500 ${nameRevealed ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-4"}`}
         >
-          <div className="animate-bounce pb-1">
-            <ChevronDown className="h-6 w-6 text-slate-500" />
-          </div>
           <div
             id="hero-skill-ticker"
-            className="relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2 px-6"
+            className="relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2 border-t border-white/10 bg-[#08080f]/95 px-6 py-3"
           >
             <SkillTuner
               items={["Shipping", "Founding", "Building", "Hacking", "Designing", "Prototyping", "Iterating"]}

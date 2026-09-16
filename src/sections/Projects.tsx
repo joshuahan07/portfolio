@@ -1,18 +1,14 @@
 import SectionHeader from "@/components/SectionHeader";
 import OrbProjectReveal from "@/components/OrbProjectReveal";
 import ProjectsGallery from "@/components/ProjectsGallery";
+import PulseRail from "@/components/PulseRail";
 
 export default function Projects() {
   return (
     <section id="projects" className="relative px-6 py-16 md:py-24">
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80 shadow-[0_0_20px_3px_rgba(34,211,238,0.5)]"
-        aria-hidden
-      />
-      <span
-        className="pointer-events-none absolute left-1/2 top-0 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300 shadow-[0_0_22px_8px_rgba(34,211,238,0.75)]"
-        aria-hidden
-      />
+      <div className="pointer-events-none absolute inset-x-0 top-0" aria-hidden>
+        <PulseRail packetWidth={200} durationS={5} />
+      </div>
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-1/4 top-0 h-80 w-80 rounded-full bg-violet-600/15 blur-[120px]" />
         <div className="absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-cyan-600/12 blur-[120px]" />

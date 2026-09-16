@@ -50,6 +50,17 @@ export default function SkillTuner({
       p: 0.08 + (i / Math.max(1, items.length - 1)) * 0.84,
     }));
 
+    // The needle steps station to station, freezing on each one (fully
+    // locked, no glyph noise) for HOLD_MS before it moves on and the next
+    // word starts decoding. It ping-pongs back and forth across the band
+    // rather than snapping from the last station back to the first.
+    const HOLD_MS = 1500;
+    const travelMs = Math.max(300, (sweepSeconds * 1000) / Math.max(1, stations.length - 1));
+    const pingpong: number[] = [];
+    for (let i = 0; i < stations.length; i++) pingpong.push(i);
+    for (let i = stations.length - 2; i > 0; i--) pingpong.push(i);
+    if (pingpong.length < 2) pingpong.push(0);
+
     let w = 0;
     const h = height;
     let raf = 0;
@@ -82,17 +93,29 @@ export default function SkillTuner({
     const draw = (now: number) => {
       ctx.clearRect(0, 0, w, h);
 
-      const period = sweepSeconds * 1000;
-      const phase = (now % period) / period;
+      const segDur = HOLD_MS + travelMs;
+      const cycle = pingpong.length * segDur;
+      const t = now % cycle;
+      const segIdx = Math.floor(t / segDur);
+      const segT = t - segIdx * segDur;
+      const curP = stations[pingpong[segIdx]].p;
+      const nextP = stations[pingpong[(segIdx + 1) % pingpong.length]].p;
+      let autoNeedle = curP;
+      if (segT >= HOLD_MS) {
+        const travelT = Math.min(1, (segT - HOLD_MS) / travelMs);
+        const eased = travelT < 0.5 ? 2 * travelT * travelT : 1 - Math.pow(-2 * travelT + 2, 2) / 2;
+        autoNeedle = curP + (nextP - curP) * eased;
+      }
+
       const needle = over
         ? Math.max(0.03, Math.min(0.97, mouseX / w))
         : reduced
         ? 0.5
-        : 0.5 + 0.47 * Math.sin(phase * Math.PI * 2);
+        : autoNeedle;
       const nx = needle * w;
 
       // ruler
-      ctx.strokeStyle = "rgba(34,211,238,.13)";
+      ctx.strokeStyle = "rgba(34,211,238,.28)";
       ctx.lineWidth = 1;
       ctx.beginPath();
       for (let i = 0; i <= 60; i++) {
@@ -105,7 +128,7 @@ export default function SkillTuner({
       ctx.beginPath();
       ctx.moveTo(0, rulerY);
       ctx.lineTo(w, rulerY);
-      ctx.strokeStyle = "rgba(34,211,238,.25)";
+      ctx.strokeStyle = "rgba(34,211,238,.45)";
       ctx.stroke();
 
       // static, loudest between stations
@@ -154,16 +177,16 @@ export default function SkillTuner({
         ctx.fillRect(x - 1, rulerY - markH, 2, markH);
       }
 
-      // needle
+      // needle — a green radar-style sweep line
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       const g = ctx.createLinearGradient(nx - 26, 0, nx + 26, 0);
-      g.addColorStop(0, "rgba(7,198,252,0)");
-      g.addColorStop(0.5, "rgba(180,239,254,.28)");
-      g.addColorStop(1, "rgba(7,198,252,0)");
+      g.addColorStop(0, "rgba(57,255,106,0)");
+      g.addColorStop(0.5, "rgba(140,255,170,.32)");
+      g.addColorStop(1, "rgba(57,255,106,0)");
       ctx.fillStyle = g;
       ctx.fillRect(nx - 26, 0, 52, h);
-      ctx.strokeStyle = "#fff";
+      ctx.strokeStyle = "#39ff6a";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(nx, 5);

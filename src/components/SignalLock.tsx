@@ -5,15 +5,16 @@ type SignalLockProps = {
   className?: string;
   /** Delay before the shear-in starts, in ms. */
   delayMs?: number;
+  style?: CSSProperties;
 };
 
 /**
  * A signal resolving out of noise: sheared, clipped bands of the line settle
  * into the clean text underneath. Pass typography (size/weight/color) via
- * `className` — this component sets none of its own.
+ * `className`/`style` — this component sets none of its own.
  */
-export default function SignalLock({ text, className = "", delayMs = 900 }: SignalLockProps) {
-  const style = { "--sl-delay": `${delayMs}ms` } as CSSProperties;
+export default function SignalLock({ text, className = "", delayMs = 900, style: styleProp }: SignalLockProps) {
+  const style = { ...styleProp, "--sl-delay": `${delayMs}ms` } as CSSProperties;
 
   return (
     <p className={`signal-lock ${className}`} style={style}>

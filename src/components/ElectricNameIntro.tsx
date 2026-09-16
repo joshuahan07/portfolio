@@ -2,13 +2,13 @@ import { useEffect, useRef, type RefObject } from "react";
 
 /**
  * Beam-strike intro ported from electric-name-intro.html, with the letter
- * outline engine replaced by the "flowing outline" technique from
- * name-fluid.html: instead of each contour node oscillating independently,
- * a roughness field (three octaves of traveling noise) slides continuously
- * along the letter's perimeter, so dents and kinks travel around the shape
- * rather than sitting still. Unlike either reference, the whole name spawns
- * at once right after the beam impact/explosion instead of being typed out
- * letter by letter.
+ * outline engine replaced by the "traveling kinks" technique from
+ * name-fluid (3).html: the letter's own crookedness is baked in once and
+ * never moves, and a few small packets of extra jaggedness travel around
+ * the perimeter — anywhere a packet isn't, the outline sits exactly on the
+ * baked glyph. Unlike either reference, the whole name spawns at once right
+ * after the beam impact/explosion instead of being typed out letter by
+ * letter.
  */
 
 type Point = { x: number; y: number };
@@ -24,16 +24,19 @@ type OutlineNode = {
   d2: number;
 };
 
-type OctaveTable = {
-  count: number;
-  amp: number;
+/** A short, traveling packet of extra jaggedness that owns a stretch of the
+ *  contour and carries its own fixed profile of kinks. */
+type KinkPacket = {
+  u: number;
+  dir: number;
   speed: number;
-  ph: Float32Array;
-  rate: Float32Array;
-  buf: Float32Array;
+  width: number;
+  amp: number;
+  prof: Float32Array;
+  rand: () => number;
 };
 
-type Geo = { nodes: OutlineNode[]; per: number; oct: OctaveTable[] };
+type Geo = { nodes: OutlineNode[]; per: number; packs: KinkPacket[] };
 
 type Crawl = { loop: number; u: number; speed: number; span: number };
 
@@ -67,24 +70,26 @@ const CFG = {
   tracking: 0.06,
 
   traceStep: 3,
-  // finer than a plain outline needs — the traveling roughness field wants
+  // finer than a plain outline needs — the traveling kink packets want
   // enough nodes to carry the moving detail.
   nodeSpacing: 0.055,
 
-  // three octaves of noise laid along the contour, each drifting at its own
-  // rate, so the dents travel instead of sitting still. each octave: how
-  // long a dent is, how deep, how fast it slides along the contour, and how
-  // fast it reshapes itself while sliding (0 = keeps its shape and just
-  // travels).
-  octaves: [
-    { wavelen: 1.05, amp: 0.02, speed: -0.5, morph: 0 },
-    { wavelen: 0.42, amp: 0.013, speed: 0.8, morph: 0 },
-    { wavelen: 0.17, amp: 0.008, speed: 1.3, morph: 0 },
-  ],
-  flowPx: 0.042,
-  fringeAmp: 1.9,
-  fringeSpeed: 0.62,
-  smooth: 0.4,
+  // the letter's own crookedness: applied once, at build time, and then
+  // never touched. this is what makes each glyph look hand-cut, and it
+  // never moves.
+  bake: 0.017,
+
+  // on top of that, a few packets of extra jaggedness that travel around
+  // the outline. outside a packet the displacement is exactly zero, so the
+  // letter is perfectly still everywhere the packets are not.
+  kinks: 3,
+  kinkWidth: 0.14,
+  kinkAmp: 0.03,
+  kinkSpeed: 0.075,
+  kinkDetail: 9,
+  fringeAmp: 1.8,
+  fringeLag: 0.05,
+  smooth: 0.5,
 
   crawlSpeed: 0.00028,
   crawlSpan: 0.26,
@@ -276,13 +281,15 @@ export default function ElectricNameIntro({
       };
     }
 
-    function sampleWrap(arr: Float32Array, x: number): number {
+    /** Linear interpolation inside a table, clamped at the ends — linear
+     *  rather than smooth on purpose: the corners between control points are
+     *  exactly what read as kinks in the outline. */
+    function sampleClamp(arr: Float32Array, x: number): number {
       const n = arr.length;
-      const fl = Math.floor(x);
-      const f = x - fl;
-      let i = fl % n; if (i < 0) i += n;
-      const j = (i + 1) % n;
-      return arr[i] + (arr[j] - arr[i]) * f;
+      if (x <= 0) return arr[0];
+      if (x >= n - 1) return arr[n - 1];
+      const i = Math.floor(x), f = x - i;
+      return arr[i] + (arr[i + 1] - arr[i]) * f;
     }
 
     function prepLetter(L: Letter, seed: number) {
@@ -304,23 +311,29 @@ export default function ElectricNameIntro({
           const p = loop[i], a = loop[(i - 1 + n) % n], b = loop[(i + 1) % n];
           const dx = b.x - a.x, dy = b.y - a.y;
           const len = Math.hypot(dx, dy) || 1;
-          nodes[i] = { x: p.x, y: p.y, nx: -dy / len, ny: dx / len, u: cum[i] / per, d1: 0, d2: 0 };
+          const nx = -dy / len, ny = dx / len;
+          // permanent crookedness, baked into the node's resting position
+          const bake = ((r() - 0.5) * 2 + Math.sin(i * 1.7 + seed * 0.11) * 0.5) * fs * CFG.bake;
+          nodes[i] = { x: p.x + nx * bake, y: p.y + ny * bake, nx, ny, u: cum[i] / per, d1: 0, d2: 0 };
         }
 
-        // one noise table per octave. control point count comes from the
-        // perimeter, so a dent is the same physical size on every letter.
-        const oct: OctaveTable[] = CFG.octaves.map((o) => {
-          const count = Math.max(6, Math.round(per / (fs * o.wavelen)));
-          const ph = new Float32Array(count);
-          const rate = new Float32Array(count);
-          for (let i = 0; i < count; i++) {
-            ph[i] = r() * 6.283;
-            rate[i] = o.morph * (0.55 + r() * 0.9);
-          }
-          return { count, amp: fs * o.amp, speed: o.speed, ph, rate, buf: new Float32Array(count) };
+        // traveling packets of extra jaggedness. each owns a short stretch
+        // of the contour and carries its own fixed profile of kinks.
+        const packs: KinkPacket[] = Array.from({ length: CFG.kinks }, (_, k) => {
+          const prof = new Float32Array(CFG.kinkDetail);
+          for (let i = 0; i < CFG.kinkDetail; i++) prof[i] = r() * 2 - 1;
+          prof[0] = prof[CFG.kinkDetail - 1] = 0; // fade to nothing at both ends
+          return {
+            u: (k / CFG.kinks + r() * 0.2) % 1,
+            dir: r() < 0.7 ? 1 : -1,
+            speed: CFG.kinkSpeed * (0.7 + r() * 0.6),
+            width: CFG.kinkWidth * (0.7 + r() * 0.6),
+            amp: fs * CFG.kinkAmp * (0.7 + r() * 0.6),
+            prof, rand: r,
+          };
         });
 
-        return { nodes, per, oct };
+        return { nodes, per, packs };
       });
 
       L.disp = L.geo.map((g) => g.nodes.map((nd) => ({ x: nd.x, y: nd.y })));
@@ -389,38 +402,56 @@ export default function ElectricNameIntro({
       impact.y = baselineY - fs * 0.36;
     }
 
-    /** The outline itself doesn't move — the roughness field slides along
-     *  it, so every dent and kink travels around the letter. */
-    function updateOutline(L: Letter, now: number, dt: number) {
-      const travelled = now * CFG.flowPx; // px the field has moved
+    /** The letter's shape is fixed. Packets of jaggedness travel around it,
+     *  and anywhere a packet is not, the outline sits exactly on the baked
+     *  glyph. */
+    function updateOutline(L: Letter, dt: number) {
       const off = lw * CFG.sheen;
       const sm = 1 - Math.pow(1 - CFG.smooth, dt / 16.67);
+      const D = CFG.kinkDetail;
 
       for (let li = 0; li < L.geo.length; li++) {
         const g = L.geo[li];
         const a = L.disp![li], bf = L.dispF![li], sh = L.dispS![li];
 
-        // refresh each octave's table: every control point is on its own
-        // slow oscillator, so a dent reshapes itself as it travels.
-        for (let o = 0; o < g.oct.length; o++) {
-          const oc = g.oct[o];
-          for (let i = 0; i < oc.count; i++) oc.buf[i] = Math.sin(oc.ph[i] + now * oc.rate[i]);
+        // advance the packets. laps per ms = px per ms / perimeter
+        for (const pk of g.packs) {
+          const prev = pk.u;
+          pk.u = (pk.u + (pk.dir * pk.speed * dt) / g.per + 1) % 1;
+          // when one completes a lap, it picks up a new set of kinks
+          if ((pk.dir > 0 && pk.u < prev) || (pk.dir < 0 && pk.u > prev)) {
+            for (let i = 1; i < D - 1; i++) pk.prof[i] = pk.rand() * 2 - 1;
+          }
         }
-
-        // how far each octave's table has scrolled, in control-point units
-        const shift = g.oct.map((o) => (travelled * o.speed * o.count) / g.per);
-        const shiftF = g.oct.map((o) => (travelled * o.speed * CFG.fringeSpeed * o.count) / g.per);
 
         for (let i = 0; i < g.nodes.length; i++) {
           const nd = g.nodes[i];
           let t1 = 0, t2 = 0;
-          for (let o = 0; o < g.oct.length; o++) {
-            const oc = g.oct[o];
-            const base = nd.u * oc.count;
-            t1 += sampleWrap(oc.buf, base - shift[o]) * oc.amp;
-            // the halo samples the same field, further along and amplified
-            t2 += sampleWrap(oc.buf, base - shiftF[o] + oc.count * 0.37) * oc.amp * CFG.fringeAmp;
+
+          for (const pk of g.packs) {
+            // signed distance from the packet centre, wrapped to the short way round
+            let d = nd.u - pk.u;
+            if (d > 0.5) d -= 1;
+            if (d < -0.5) d += 1;
+
+            const q = d / pk.width; // -1..1 inside the packet
+            if (q > -1 && q < 1) {
+              const env = Math.cos((q * Math.PI) / 2); // zero at both edges
+              const v = sampleClamp(pk.prof, ((q + 1) / 2) * (D - 1)) * env * env;
+              t1 += v * pk.amp;
+            }
+
+            // the halo runs the same packet a little behind and deeper
+            let df = nd.u - (pk.u - pk.dir * CFG.fringeLag);
+            if (df > 0.5) df -= 1;
+            if (df < -0.5) df += 1;
+            const qf = df / pk.width;
+            if (qf > -1 && qf < 1) {
+              const envF = Math.cos((qf * Math.PI) / 2);
+              t2 += sampleClamp(pk.prof, ((qf + 1) / 2) * (D - 1)) * envF * envF * pk.amp * CFG.fringeAmp;
+            }
           }
+
           nd.d1 += (t1 - nd.d1) * sm;
           nd.d2 += (t2 - nd.d2) * sm;
 
@@ -635,11 +666,11 @@ export default function ElectricNameIntro({
         const L = letters[i];
         if (!L.loops.length || now < L.revealAt) continue;
         L.shown = true;
-        updateOutline(L, now, dt);
+        updateOutline(L, dt);
         const flare = Math.max(0, 1 - (now - L.revealAt) / 300);
         const flick = 0.85 + 0.15 * Math.sin(now * 0.0022 + L.phase);
         const sweep = 1 + 0.5 * Math.exp(-Math.pow((L.cx - sweepX) / (W * 0.16), 2));
-        const a = Math.min(1.8, flick * sweep * (1 + flare * 1.5)) * 0.7;
+        const a = Math.min(1.8, flick * sweep * (1 + flare * 1.5)) * 0.85;
 
         strokeLoops(ga, L.disp, lw * 3.4, COL.mid, 0.3 * a);
         strokeLoops(ga, L.dispF, lw * 0.9, COL.hot, 0.24 * a);
@@ -779,7 +810,7 @@ export default function ElectricNameIntro({
 
       ctx!.lineCap = ctx!.lineJoin = "round";
 
-      const LETTER_DIM = 0.62;
+      const LETTER_DIM = 0.82;
 
       for (let i = 0; i < letters.length; i++) {
         const L = letters[i];
@@ -792,7 +823,7 @@ export default function ElectricNameIntro({
         // normal (non-additive) blending so it actually darkens the bloom
         // underneath, then hand back to additive for the glowing edge.
         ctx!.globalCompositeOperation = "source-over";
-        fillLoops(ctx!, L.disp, "#050608");
+        fillLoops(ctx!, L.disp, "#161d24");
         ctx!.globalCompositeOperation = "lighter";
 
         strokeLoops(ctx!, L.dispF, Math.max(0.7, lw * 0.22), COL.hot, 0.26 * flick * LETTER_DIM);

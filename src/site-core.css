@@ -151,37 +151,25 @@
 }
 
 /* Orb project reveal */
-.orb-arrow-top {
-  top: -4px;
-  left: 50%;
-  transform: translate(-50%, -100%);
-  animation: orb-bounce-down 1.4s ease-in-out infinite;
-}
-
 .orb-arrow-bottom {
-  bottom: -4px;
+  bottom: -18px;
   left: 50%;
   transform: translate(-50%, 100%);
   animation: orb-bounce-up 1.4s ease-in-out infinite 0.35s;
 }
 
 .orb-arrow-left {
-  left: -4px;
+  left: -18px;
   top: 50%;
   transform: translate(-100%, -50%);
   animation: orb-bounce-right 1.4s ease-in-out infinite 0.15s;
 }
 
 .orb-arrow-right {
-  right: -4px;
+  right: -18px;
   top: 50%;
   transform: translate(100%, -50%);
   animation: orb-bounce-left 1.4s ease-in-out infinite 0.5s;
-}
-
-@keyframes orb-bounce-down {
-  0%, 100% { transform: translate(-50%, -100%) translateY(0); }
-  50% { transform: translate(-50%, -100%) translateY(6px); }
 }
 
 @keyframes orb-bounce-up {
@@ -243,7 +231,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .orb-arrow-top,
   .orb-arrow-bottom,
   .orb-arrow-left,
   .orb-arrow-right,
@@ -282,7 +269,7 @@
   width: 100%;
   opacity: 0;
   white-space: nowrap;
-  animation: signal-lock-shear 1s steps(1, end) var(--sl-delay, 900ms) forwards;
+  animation: signal-lock-shear 3s steps(1, end) var(--sl-delay, 900ms) infinite;
 }
 
 /* each band takes a different slice of the line and shears by its own amount */
@@ -297,25 +284,127 @@
 .signal-lock__base {
   position: relative;
   opacity: 0;
-  animation: signal-lock-settle 0.4s ease-out calc(var(--sl-delay, 900ms) + 800ms) forwards;
+  animation: signal-lock-settle 3s ease-out var(--sl-delay, 900ms) infinite;
 }
 
+/* the shear/flicker plays out over the first third of the 3s cycle, then
+   holds still (invisible) until the loop restarts. */
 @keyframes signal-lock-shear {
-  0%   { opacity: 0; transform: translateX(var(--sl-x)); }
-  8%   { opacity: 1; }
-  24%  { transform: translateX(calc(var(--sl-x) * -0.62)); }
-  38%  { transform: translateX(calc(var(--sl-x) *  0.34)); }
-  52%  { transform: translateX(calc(var(--sl-x) * -0.16)); }
-  66%  { transform: translateX(0); }
-  88%  { opacity: 1; }
-  100% { opacity: 0; transform: translateX(0); }
+  0%     { opacity: 0; transform: translateX(var(--sl-x)); }
+  2.7%   { opacity: 1; }
+  8%     { transform: translateX(calc(var(--sl-x) * -0.62)); }
+  12.7%  { transform: translateX(calc(var(--sl-x) *  0.34)); }
+  17.3%  { transform: translateX(calc(var(--sl-x) * -0.16)); }
+  22%    { transform: translateX(0); }
+  29.3%  { opacity: 1; }
+  33.3%  { opacity: 0; transform: translateX(0); }
+  100%   { opacity: 0; transform: translateX(0); }
 }
 
+/* the clean text locks in right as the bands settle, holds, then fades
+   out just before the next loop's flicker starts. */
 @keyframes signal-lock-settle {
-  to { opacity: 1; }
+  0%    { opacity: 0; }
+  29%   { opacity: 0; }
+  33.3% { opacity: 1; }
+  95%   { opacity: 1; }
+  100%  { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .signal-lock__layer { display: none; }
   .signal-lock__base  { opacity: 1; animation: none; }
+}
+
+/* ============================================================
+   Pulse rail divider
+   ============================================================ */
+
+.pulse-rail {
+  container-type: inline-size;   /* lets the packet travel exactly one rail width */
+  position: relative;
+  width: 100%;
+  height: 1px;
+  background: rgba(34, 211, 238, 0.22);
+  overflow: visible;             /* the packet's glow spills past the hairline */
+}
+
+.pulse-rail__packet {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: var(--pr-packet, 130px);
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #b4effe 30%,
+    #ffffff 50%,
+    #b4effe 70%,
+    transparent
+  );
+  box-shadow: 0 0 14px rgba(34, 211, 238, 0.9);
+  will-change: transform;
+  animation: pulse-rail-run var(--pr-duration, 5.5s) cubic-bezier(0.5, 0, 0.5, 1)
+    var(--pr-delay, 0s) infinite;
+}
+
+/* 100cqw is the rail's own width, 100% is the packet's,
+   so it starts fully off the left edge and exits fully off the right */
+@keyframes pulse-rail-run {
+  0% {
+    transform: translate3d(-100%, 0, 0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(calc(100cqw + 100%), 0, 0);
+    opacity: 0;
+  }
+}
+
+.pulse-rail--reverse .pulse-rail__packet {
+  animation-direction: reverse;
+}
+
+/* container query units are widely supported, but fall back to the viewport
+   width, which is correct for any rail that spans the page */
+@supports not (width: 1cqw) {
+  @keyframes pulse-rail-run {
+    0% {
+      transform: translate3d(-100%, 0, 0);
+      opacity: 0;
+    }
+    10% {
+      opacity: 1;
+    }
+    90% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate3d(calc(100vw + 100%), 0, 0);
+      opacity: 0;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-rail__packet {
+    animation: none;
+    opacity: 0;
+  }
+  .pulse-rail {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(34, 211, 238, 0.5),
+      transparent
+    );
+  }
 }

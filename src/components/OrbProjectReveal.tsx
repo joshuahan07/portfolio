@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUp } from "lucide-react";
 import { animateLightningStrike, buildStrikeOrigins, fitCanvas } from "@/lib/lightning";
 import { publicUrl } from "@/lib/publicUrl";
 import ElectricBall from "@/components/ElectricBall";
@@ -13,7 +13,6 @@ type OrbProjectRevealProps = {
 };
 
 const ARROWS = [
-  { Icon: ArrowDown, className: "orb-arrow-top", label: "top" },
   { Icon: ArrowUp, className: "orb-arrow-bottom", label: "bottom" },
   { Icon: ArrowRight, className: "orb-arrow-left", label: "left" },
   { Icon: ArrowLeft, className: "orb-arrow-right", label: "right" },
@@ -165,11 +164,6 @@ export default function OrbProjectReveal({ children }: OrbProjectRevealProps) {
             phase === "striking" || phase === "exploding" ? "pointer-events-none" : ""
           }`}
         >
-          <div
-            className="mb-10 h-px w-40 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-90 shadow-[0_0_16px_3px_rgba(34,211,238,0.6)]"
-            aria-hidden
-          />
-
           <div className="relative flex h-[280px] w-[280px] items-center justify-center sm:h-[300px] sm:w-[300px]">
             {showArrows
               ? ARROWS.map(({ Icon, className: arrowClass }) => (
@@ -217,11 +211,6 @@ export default function OrbProjectReveal({ children }: OrbProjectRevealProps) {
               Click to see my work
             </p>
           ) : null}
-
-          <div
-            className="mt-10 h-px w-40 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-90 shadow-[0_0_16px_3px_rgba(34,211,238,0.6)]"
-            aria-hidden
-          />
         </div>
       ) : null}
 
