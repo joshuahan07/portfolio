@@ -166,7 +166,7 @@ export default function OrbProjectReveal({ children }: OrbProjectRevealProps) {
           }`}
         >
           <div
-            className="mb-10 h-px w-40 bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"
+            className="mb-10 h-px w-40 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-90 shadow-[0_0_16px_3px_rgba(34,211,238,0.6)]"
             aria-hidden
           />
 
@@ -219,7 +219,7 @@ export default function OrbProjectReveal({ children }: OrbProjectRevealProps) {
           ) : null}
 
           <div
-            className="mt-10 h-px w-40 bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"
+            className="mt-10 h-px w-40 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-90 shadow-[0_0_16px_3px_rgba(34,211,238,0.6)]"
             aria-hidden
           />
         </div>

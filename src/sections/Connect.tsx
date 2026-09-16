@@ -35,7 +35,11 @@ export default function Connect() {
   return (
     <section id="connect" className="relative px-6 py-16 md:py-24">
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent"
+        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400 to-transparent opacity-80 shadow-[0_0_20px_3px_rgba(167,139,250,0.5)]"
+        aria-hidden
+      />
+      <span
+        className="pointer-events-none absolute left-1/2 top-0 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-300 shadow-[0_0_22px_8px_rgba(167,139,250,0.75)]"
         aria-hidden
       />
       <div className="pointer-events-none absolute inset-0 z-0">

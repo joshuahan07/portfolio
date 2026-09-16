@@ -212,19 +212,23 @@ export default function About() {
       </h3>
       <div className="relative mb-14 grid gap-5 sm:grid-cols-2 md:mb-16">
         <div
-          className="pointer-events-none absolute inset-y-6 left-1/2 hidden w-px -translate-x-1/2 bg-gradient-to-b from-violet-400 via-fuchsia-400 to-cyan-400 opacity-60 sm:block"
+          className="pointer-events-none absolute inset-y-6 left-1/2 hidden w-px -translate-x-1/2 bg-gradient-to-b from-sky-400 via-blue-400 to-cyan-400 opacity-80 shadow-[0_0_16px_2px_rgba(56,189,248,0.55)] sm:block"
+          aria-hidden
+        />
+        <span
+          className="pointer-events-none absolute left-1/2 top-1/2 hidden h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-sky-400 via-blue-400 to-cyan-400 shadow-[0_0_22px_6px_rgba(56,189,248,0.8)] ring-4 ring-[hsl(240_18%_6%)] sm:block"
           aria-hidden
         />
         {education.map((edu, i) => {
           return (
             <div key={edu.title} className="contents">
               {i > 0 ? (
-                <div
-                  className="mx-auto h-px w-24 bg-gradient-to-r from-transparent via-fuchsia-400 to-transparent opacity-70 sm:hidden"
-                  aria-hidden
-                />
+                <div className="relative mx-auto flex w-28 items-center justify-center sm:hidden" aria-hidden>
+                  <div className="h-px w-full bg-gradient-to-r from-transparent via-sky-400 to-transparent opacity-90 shadow-[0_0_14px_2px_rgba(56,189,248,0.55)]" />
+                  <span className="absolute h-2.5 w-2.5 rounded-full bg-gradient-to-br from-sky-400 via-blue-400 to-cyan-400 shadow-[0_0_18px_4px_rgba(56,189,248,0.8)] ring-4 ring-[hsl(240_18%_6%)]" />
+                </div>
               ) : null}
-              <div className="education-card group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.09] to-white/[0.02] p-6 shadow-xl shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:border-violet-400/25 hover:shadow-[0_20px_60px_-24px_rgba(167,139,250,0.35)]">
+              <div className="education-card group relative flex flex-col items-center overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.09] to-white/[0.02] p-6 text-center shadow-xl shadow-black/30 transition-all duration-300 hover:-translate-y-1 hover:border-violet-400/25 hover:shadow-[0_20px_60px_-24px_rgba(167,139,250,0.35)]">
                 <div
                   className={`absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 ${edu.color}/10`}
                   aria-hidden

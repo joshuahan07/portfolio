@@ -258,3 +258,64 @@
     transform: none;
   }
 }
+
+/* ============================================================
+   Signal lock subtitle
+   Sets no colour, size or weight — those come from whatever
+   classes are passed to the SignalLock component.
+   ============================================================ */
+
+.signal-lock {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.signal-lock__stack {
+  position: relative;
+  display: inline-block;
+}
+
+.signal-lock__layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  opacity: 0;
+  white-space: nowrap;
+  animation: signal-lock-shear 1s steps(1, end) var(--sl-delay, 900ms) forwards;
+}
+
+/* each band takes a different slice of the line and shears by its own amount */
+.signal-lock__layer:nth-child(1) { clip-path: inset(0 0 74% 0);   --sl-x: -46px; }
+.signal-lock__layer:nth-child(2) { clip-path: inset(26% 0 48% 0); --sl-x:  32px;
+                                   color: #22d3ee; mix-blend-mode: screen; }
+.signal-lock__layer:nth-child(3) { clip-path: inset(52% 0 22% 0); --sl-x: -22px;
+                                   color: #a78bfa; mix-blend-mode: screen; }
+.signal-lock__layer:nth-child(4) { clip-path: inset(74% 0 0 0);   --sl-x:  40px; }
+
+/* the clean line, revealed underneath as the bands settle */
+.signal-lock__base {
+  position: relative;
+  opacity: 0;
+  animation: signal-lock-settle 0.4s ease-out calc(var(--sl-delay, 900ms) + 800ms) forwards;
+}
+
+@keyframes signal-lock-shear {
+  0%   { opacity: 0; transform: translateX(var(--sl-x)); }
+  8%   { opacity: 1; }
+  24%  { transform: translateX(calc(var(--sl-x) * -0.62)); }
+  38%  { transform: translateX(calc(var(--sl-x) *  0.34)); }
+  52%  { transform: translateX(calc(var(--sl-x) * -0.16)); }
+  66%  { transform: translateX(0); }
+  88%  { opacity: 1; }
+  100% { opacity: 0; transform: translateX(0); }
+}
+
+@keyframes signal-lock-settle {
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-lock__layer { display: none; }
+  .signal-lock__base  { opacity: 1; animation: none; }
+}

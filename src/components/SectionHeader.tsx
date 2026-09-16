@@ -4,6 +4,7 @@ type SectionHeaderProps = {
   description?: string;
   align?: "center" | "left";
   accent?: "violet" | "cyan" | "rose" | "emerald";
+  showDivider?: boolean;
 };
 
 const accentLine: Record<NonNullable<SectionHeaderProps["accent"]>, string> = {
@@ -26,6 +27,7 @@ export default function SectionHeader({
   description,
   align = "center",
   accent = "violet",
+  showDivider = true,
 }: SectionHeaderProps) {
   const centered = align === "center";
 
@@ -52,12 +54,14 @@ export default function SectionHeader({
           {description}
         </p>
       ) : null}
-      <div
-        className={`mt-6 h-px w-24 bg-gradient-to-r from-transparent ${accentLine[accent]} to-transparent ${
-          centered ? "mx-auto" : ""
-        }`}
-        aria-hidden
-      />
+      {showDivider ? (
+        <div
+          className={`mt-6 h-px w-24 bg-gradient-to-r from-transparent ${accentLine[accent]} to-transparent ${
+            centered ? "mx-auto" : ""
+          }`}
+          aria-hidden
+        />
+      ) : null}
     </header>
   );
 }

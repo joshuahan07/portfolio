@@ -34,7 +34,7 @@ const VARIANT_STYLES: Record<
     accent: { width: 40, height: 1, background: "rgba(255,255,255,0.25)" },
     title: {
       fontFamily: '"Comic Sans MS", "Comic Sans", cursive',
-      fontSize: "clamp(1.5rem, 4vw, 2rem)",
+      fontSize: "clamp(2.25rem, 6vw, 3.5rem)",
       fontWeight: 700,
       color: "#f0ede8",
       marginBottom: "0.5rem",
@@ -71,14 +71,14 @@ export default function AboutCanvasCard({
           visibility: opacity > 0 ? "visible" : "hidden",
         }}
       >
-        <div className="max-w-lg text-center" style={{ fontFamily: '"Comic Sans MS", "Comic Sans", cursive' }}>
+        <div className="max-w-3xl text-center" style={{ fontFamily: '"Comic Sans MS", "Comic Sans", cursive' }}>
           <h1
             style={{
               fontFamily: '"Comic Sans MS", "Comic Sans", cursive',
-              fontSize: "clamp(1.5rem, 4vw, 2rem)",
+              fontSize: "clamp(2.25rem, 6vw, 3.5rem)",
               fontWeight: 700,
               color: "#ffffff",
-              marginBottom: "0.5rem",
+              marginBottom: "0.75rem",
               letterSpacing: "-0.02em",
               textShadow: OVERLAY_TEXT_SHADOW,
             }}
@@ -87,9 +87,9 @@ export default function AboutCanvasCard({
           </h1>
           <div
             style={{
-              width: 40,
-              height: 1,
-              margin: "0 auto 1.5rem",
+              width: 64,
+              height: 2,
+              margin: "0 auto 2rem",
               background: "rgba(255,255,255,0.5)",
             }}
           />
@@ -98,9 +98,9 @@ export default function AboutCanvasCard({
               key={i}
               style={{
                 color: "#ffffff",
-                lineHeight: 1.75,
-                marginBottom: i < 2 ? "1rem" : 0,
-                fontSize: "0.95rem",
+                lineHeight: 1.7,
+                marginBottom: i < 2 ? "1.5rem" : 0,
+                fontSize: "clamp(1.1rem, 2.6vw, 1.5rem)",
                 textShadow: OVERLAY_TEXT_SHADOW,
               }}
             >

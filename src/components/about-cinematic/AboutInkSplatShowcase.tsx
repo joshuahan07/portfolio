@@ -26,7 +26,6 @@ import {
   type PathDocument,
 } from "./basketballPathDocument";
 import { clearPathMathCache } from "./basketballPathMath";
-import BasketballScrollDebugPanel from "./BasketballScrollDebugPanel";
 import {
   useBasketballScrollDebug,
   useBasketballDebugLogger,
@@ -95,7 +94,6 @@ export default function AboutInkSplatShowcase() {
     height: number;
   } | null>(null);
 
-  const showEditor = import.meta.env.DEV;
   const scrollDebug = useBasketballScrollDebug();
 
   const shotComplete = shotProgress >= SHOT_DONE;
@@ -434,31 +432,6 @@ export default function AboutInkSplatShowcase() {
       data-arc-pct={Math.round(bounceMotion.arcT * 100)}
       data-ball-visible={showBall ? "1" : "0"}
     >
-      {scrollDebug ? (
-        <BasketballScrollDebugPanel snapshot={debugSnapshot} />
-      ) : null}
-
-      {showEditor ? (
-        <div className="mx-auto mb-2 flex flex-wrap items-center justify-center gap-3">
-          <button
-            type="button"
-            className="font-mono text-[9px] tracking-wider text-violet-400/80 underline-offset-2 hover:text-violet-300 hover:underline"
-            onClick={() => {
-              const payload = JSON.stringify(pathDoc, null, 2);
-              void navigator.clipboard?.writeText(payload);
-              console.info("[basketball paths]", pathDoc);
-            }}
-          >
-            Copy path JSON
-          </button>
-          <span className="font-mono text-[9px] text-slate-500">
-            Card {Math.round(cardReveal * 100)}% · fall{" "}
-            {shotComplete ? Math.round(bounceMotion.fallT * 100) : 0}% · arc{" "}
-            {Math.round(bounceMotion.arcT * 100)}%
-          </span>
-        </div>
-      ) : null}
-
       {/* Shot: hoop only — pinned while ball travels the shot path */}
       <div ref={shotBridgeRef} className="ink-story-bridge ink-story-bridge--shot">
         <div
