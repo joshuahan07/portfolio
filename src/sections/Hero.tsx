@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createNoise2D } from "simplex-noise";
 import SkillTuner from "@/components/SkillTuner";
 import ElectricNameIntro from "@/components/ElectricNameIntro";
 import SignalLock from "@/components/SignalLock";
@@ -9,6 +10,22 @@ function insideBox(x: number, y: number, box: AvoidBox) {
   return x > box.x && x < box.x + box.w && y > box.y && y < box.y + box.h
 }
 
+function clamp(v: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, v))
+}
+
+function pickPoint(canvas: HTMLCanvasElement, avoid: AvoidBox | null, fieldH: number) {
+  let x = Math.random() * canvas.width
+  let y = Math.random() * fieldH
+  if (avoid) {
+    for (let tries = 0; tries < 12 && insideBox(x, y, avoid); tries++) {
+      x = Math.random() * canvas.width
+      y = Math.random() * fieldH
+    }
+  }
+  return { x, y }
+}
+
 class Particle {
   x: number
   y: number
@@ -17,18 +34,13 @@ class Particle {
   radius: number
   canvas: HTMLCanvasElement
   avoid: AvoidBox | null
+  fieldH: number
 
-  constructor(canvas: HTMLCanvasElement, avoid: AvoidBox | null) {
+  constructor(canvas: HTMLCanvasElement, avoid: AvoidBox | null, fieldH: number) {
     this.canvas = canvas
     this.avoid = avoid
-    let x = Math.random() * canvas.width
-    let y = Math.random() * canvas.height
-    if (avoid) {
-      for (let tries = 0; tries < 12 && insideBox(x, y, avoid); tries++) {
-        x = Math.random() * canvas.width
-        y = Math.random() * canvas.height
-      }
-    }
+    this.fieldH = fieldH
+    const { x, y } = pickPoint(canvas, avoid, fieldH)
     this.x = x
     this.y = y
     this.vx = (Math.random() - 0.5) * 0.18
@@ -40,7 +52,7 @@ class Particle {
     this.x += this.vx
     this.y += this.vy
     if (this.x < 0 || this.x > this.canvas.width) this.vx *= -1
-    if (this.y < 0 || this.y > this.canvas.height) this.vy *= -1
+    if (this.y < 0 || this.y > this.fieldH) this.vy *= -1
 
     // Nudge back out if it drifts into the name's keep-out zone, so dots
     // stay around the name rather than drifting across it.
@@ -60,6 +72,75 @@ class Particle {
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2)
     ctx.fillStyle = 'rgba(56, 189, 248, 0.6)'
     ctx.fill()
+  }
+}
+
+/** The "snitch" — a glowing point that drifts on its own through the dot
+ *  field whenever the cursor is idle, so the background always has a live
+ *  spot for lightning to arc toward instead of going dark. It picks a far
+ *  random target somewhere across the whole field every few seconds and
+ *  steers toward it (with a little noise wobble layered on for organic
+ *  wobble), so it actually crosses the background instead of just looping
+ *  in place near wherever it started. */
+class Orb {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  targetX: number
+  targetY: number
+  retargetIn: number
+
+  constructor(canvas: HTMLCanvasElement, avoid: AvoidBox | null, fieldH: number) {
+    const { x, y } = pickPoint(canvas, avoid, fieldH)
+    this.x = x
+    this.y = y
+    const angle = Math.random() * Math.PI * 2
+    this.vx = Math.cos(angle) * 262
+    this.vy = Math.sin(angle) * 262
+    const target = pickPoint(canvas, avoid, fieldH)
+    this.targetX = target.x
+    this.targetY = target.y
+    this.retargetIn = 2 + Math.random() * 3
+  }
+
+  update(canvas: HTMLCanvasElement, fieldH: number, avoid: AvoidBox | null, noise2D: (x: number, y: number) => number, t: number, dt: number) {
+    this.retargetIn -= dt
+    if (this.retargetIn <= 0) {
+      const target = pickPoint(canvas, avoid, fieldH)
+      this.targetX = target.x
+      this.targetY = target.y
+      this.retargetIn = 2.5 + Math.random() * 3.5
+    }
+
+    const speed = 262
+    const curAngle = Math.atan2(this.vy, this.vx)
+    const toTarget = Math.atan2(this.targetY - this.y, this.targetX - this.x)
+    const diff = Math.atan2(Math.sin(toTarget - curAngle), Math.cos(toTarget - curAngle))
+    const wobble = noise2D(t, 0) * 1.1
+    const angle = curAngle + (diff * 1.6 + wobble) * dt
+
+    this.vx = Math.cos(angle) * speed
+    this.vy = Math.sin(angle) * speed
+
+    this.x += this.vx * dt
+    this.y += this.vy * dt
+
+    const margin = 40
+    if (this.x < margin || this.x > canvas.width - margin) this.vx *= -1
+    if (this.y < margin || this.y > fieldH - margin) this.vy *= -1
+    this.x = clamp(this.x, 20, canvas.width - 20)
+    this.y = clamp(this.y, 20, fieldH - 20)
+
+    if (avoid && insideBox(this.x, this.y, avoid)) {
+      const cx = avoid.x + avoid.w / 2
+      const cy = avoid.y + avoid.h / 2
+      const dx = this.x - cx || 0.01
+      const dy = this.y - cy || 0.01
+      const len = Math.hypot(dx, dy) || 1
+      this.vx += (dx / len) * 30
+      this.vy += (dy / len) * 30
+    }
   }
 }
 
@@ -166,10 +247,10 @@ function drawBolt(ctx: CanvasRenderingContext2D, bolt: Bolt) {
 
 function drawMouseGlow(ctx: CanvasRenderingContext2D, x: number, y: number, power: number) {
   if (power <= 0.01) return
-  const r = 90 * power
+  const r = 52 * power
   const g = ctx.createRadialGradient(x, y, 0, x, y, r)
-  g.addColorStop(0, `rgba(200, 235, 255, ${0.55 * power})`)
-  g.addColorStop(0.35, `rgba(56, 189, 248, ${0.28 * power})`)
+  g.addColorStop(0, `rgba(200, 235, 255, ${0.7 * power})`)
+  g.addColorStop(0.25, `rgba(56, 189, 248, ${0.4 * power})`)
   g.addColorStop(1, "rgba(56, 189, 248, 0)")
   ctx.fillStyle = g
   ctx.beginPath()
@@ -191,6 +272,12 @@ export default function Hero() {
   const lastFrameRef = useRef(0)
   const nameHeadingRef = useRef<HTMLHeadingElement>(null)
   const [nameRevealed, setNameRevealed] = useState(false)
+  const orbRef = useRef<Orb | null>(null)
+  const orbNoiseRef = useRef(createNoise2D(() => Math.random()))
+  const avoidRef = useRef<AvoidBox | null>(null)
+  const wasMovingRef = useRef(false)
+  const tickerRef = useRef<HTMLDivElement>(null)
+  const fieldHRef = useRef(0)
 
   useEffect(() => {
     const canvas = canvasRef.current
@@ -221,8 +308,22 @@ export default function Hero() {
         }
       }
 
-      const count = Math.floor((canvas.width * canvas.height) / 9000)
-      particlesRef.current = Array.from({ length: Math.max(count, 70) }, () => new Particle(canvas, avoid))
+      // Keep the dot field / lightning confined to the area above the skill
+      // tuner strip, instead of wandering underneath it.
+      const tickerEl = tickerRef.current
+      const fieldH = tickerEl ? Math.max(40, tickerEl.getBoundingClientRect().top - rect.top) : h
+      fieldHRef.current = fieldH
+
+      const count = Math.floor((canvas.width * fieldH) / 9000)
+      particlesRef.current = Array.from({ length: Math.max(count, 70) }, () => new Particle(canvas, avoid, fieldH))
+
+      avoidRef.current = avoid
+      if (!orbRef.current) {
+        orbRef.current = new Orb(canvas, avoid, fieldH)
+      } else {
+        orbRef.current.x = clamp(orbRef.current.x, 20, canvas.width - 20)
+        orbRef.current.y = clamp(orbRef.current.y, 20, fieldH - 20)
+      }
     }
 
     resize()
@@ -278,46 +379,60 @@ export default function Hero() {
       const mouse = mouseRef.current
       const glow = glowRef.current
 
-      // Only spawn new bolts/sparks while the cursor is actually moving —
-      // existing ones still finish their natural fade, but nothing new
-      // fires once the cursor sits still.
+      // The cursor drives the effect while it's actually moving. The moment
+      // it goes idle, control hands off to the wandering orb so the arcs
+      // always have a live point to reach for instead of just dying out.
       const moving = mouse.active && now - lastMoveTimeRef.current < 100
 
-      glow.power += ((moving ? 1 : 0) - glow.power) * Math.min(1, dt * 6)
+      const orb = orbRef.current
+      if (orb) {
+        // Pick up the wander from wherever the cursor just left off, instead
+        // of snapping back to whatever spot it was drifting through before
+        // the cursor took over.
+        if (wasMovingRef.current && !moving) {
+          orb.x = clamp(mouse.x, 20, canvas.width - 20)
+          orb.y = clamp(mouse.y, 20, fieldHRef.current - 20)
+        }
+        orb.update(canvas, fieldHRef.current, avoidRef.current, orbNoiseRef.current, now * 0.00022, dt)
+      }
+      wasMovingRef.current = moving
+      const srcX = moving || !orb ? mouse.x : orb.x
+      const srcY = moving || !orb ? mouse.y : orb.y
+
+      glow.power += (1 - glow.power) * Math.min(1, dt * 6)
 
       for (const [key, bolt] of bolts) {
         bolt.life -= bolt.decay * dt
         if (bolt.life <= 0) bolts.delete(key)
       }
 
-      if (moving) {
-        for (let i = 0; i < particles.length; i++) {
-          if (bolts.has(i)) continue
-          const mdx = particles[i].x - mouse.x
-          const mdy = particles[i].y - mouse.y
-          const mdist = Math.sqrt(mdx * mdx + mdy * mdy)
-          if (mdist < 200) {
-            const maxAlpha = Math.min(1, (1 - mdist / 200) * 1.3)
-            bolts.set(i, makeBolt(particles[i].x, particles[i].y, mouse.x, mouse.y, maxAlpha))
-          }
+      for (let i = 0; i < particles.length; i++) {
+        if (bolts.has(i)) continue
+        const mdx = particles[i].x - srcX
+        const mdy = particles[i].y - srcY
+        const mdist = Math.sqrt(mdx * mdx + mdy * mdy)
+        if (mdist < 200) {
+          const maxAlpha = Math.min(1, (1 - mdist / 200) * 1.3)
+          bolts.set(i, makeBolt(particles[i].x, particles[i].y, srcX, srcY, maxAlpha))
         }
       }
 
-      // Idle crackle — small sparks fire off the cursor itself so it reads
-      // as live electricity even when no dot is close enough to arc to.
+      // Idle crackle — small sparks fire off the active source (cursor or
+      // orb) itself so it reads as live electricity even when no dot is
+      // close enough to arc to.
       const sparks = sparksRef.current
       for (let i = sparks.length - 1; i >= 0; i--) {
         sparks[i].life -= sparks[i].decay * dt
         if (sparks[i].life <= 0) sparks.splice(i, 1)
       }
-      if (moving && now - lastSparkRef.current > 90 && sparks.length < 5) {
+      if (now - lastSparkRef.current > 90 && sparks.length < 5) {
         lastSparkRef.current = now
-        sparks.push(makeSpark(mouse.x, mouse.y))
+        sparks.push(makeSpark(srcX, srcY))
       }
 
       if (bolts.size > 0 || sparks.length > 0 || glow.power > 0.01) {
         ctx.globalCompositeOperation = 'lighter'
-        drawMouseGlow(ctx, mouse.x, mouse.y, glow.power)
+        drawMouseGlow(ctx, srcX, srcY, glow.power)
         for (const bolt of bolts.values()) {
           drawBolt(ctx, bolt)
         }
@@ -416,6 +531,7 @@ export default function Hero() {
         </div>
 
         <div
+          ref={tickerRef}
           className={`hero-bottom mt-auto flex w-full shrink-0 flex-col items-center gap-2 transition-all duration-1000 delay-500 ${nameRevealed ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-4"}`}
         >
           <div
@@ -423,7 +539,7 @@ export default function Hero() {
             className="relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2 border-t border-white/10 bg-[#08080f]/95 px-6 py-3"
           >
             <SkillTuner
-              items={["Shipping", "Founding", "Building", "Hacking", "Designing", "Prototyping", "Iterating"]}
+              items={["Product Strategy", "User Research", "Roadmapping", "Prototyping", "Full-Stack", "Design"]}
               height={90}
             />
           </div>

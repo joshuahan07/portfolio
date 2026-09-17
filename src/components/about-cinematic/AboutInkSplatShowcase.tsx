@@ -1,6 +1,4 @@
 import {
-  lazy,
-  Suspense,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -11,6 +9,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import gsap from "gsap";
 import BasketballKnockScene from "./BasketballKnockScene";
 import BasketballBall from "./BasketballBall";
+import AboutPhosphorCard from "./AboutPhosphorCard";
 import { getFullAnimationPath } from "./basketballPathDocument";
 import { resolveViewportBallPose } from "./basketballScrollPhases";
 import {
@@ -32,16 +31,6 @@ import {
 } from "./useBasketballScrollDebug";
 
 gsap.registerPlugin(ScrollTrigger);
-
-const InkBloomSplatCard = lazy(() => import("./canvas/InkBloomSplatCard"));
-
-function StageFallback() {
-  return (
-    <div className="flex min-h-[min(580px,82vh)] items-center justify-center bg-white">
-      <span className="sr-only">Loading…</span>
-    </div>
-  );
-}
 
 function normalizePostShotScroll(rawProgress: number, startProgress: number | null) {
   if (startProgress == null) return 0;
@@ -66,21 +55,14 @@ export default function AboutInkSplatShowcase() {
   const [pathDoc, setPathDoc] = useState<PathDocument>(() =>
     ensureShotSegment(loadPathDocument()),
   );
-  const [playKey] = useState(0);
   const [shotProgress, setShotProgress] = useState(0);
   const [cardReveal, setCardReveal] = useState(0);
   const [postShotScrollRaw, setPostShotScrollRaw] = useState(0);
   const [arcStartCardReveal, setArcStartCardReveal] = useState<number | null>(
     null,
   );
-  const [pourTrigger, setPourTrigger] = useState(0);
-  const [scrollLocked, setScrollLocked] = useState(false);
   const [ballActive, setBallActive] = useState(false);
 
-  const bloomFiredRef = useRef(false);
-  /** Only allow the pour once we've observed the card BELOW center — guards against
-   *  a refresh/deep-link landing already scrolled past it from firing immediately. */
-  const seenBelowCenterRef = useRef(false);
   const postShotScrollRawRef = useRef(0);
   const postShotStartRef = useRef<number | null>(null);
   /** Screen box for the shot path — captured at the rim. */
@@ -232,55 +214,6 @@ export default function AboutInkSplatShowcase() {
     setPathDoc(ensureShotSegment(loadPathDocument()));
   }, []);
 
-  const triggerPour = useCallback(() => {
-    if (bloomFiredRef.current) return;
-    bloomFiredRef.current = true;
-    setScrollLocked(true);
-    setPourTrigger((t) => t + 1);
-  }, []);
-
-  const handleSequenceComplete = useCallback(() => {
-    setScrollLocked(false);
-  }, []);
-
-  /** Freeze the page in place while the ink sequence plays. */
-  useEffect(() => {
-    if (!scrollLocked) return;
-
-    const html = document.documentElement;
-    const body = document.body;
-    const prevHtmlOverflow = html.style.overflow;
-    const prevBodyOverflow = body.style.overflow;
-    html.style.overflow = "hidden";
-    body.style.overflow = "hidden";
-
-    const preventScroll = (e: Event) => e.preventDefault();
-    const scrollKeys = new Set([
-      "ArrowUp",
-      "ArrowDown",
-      "PageUp",
-      "PageDown",
-      "Home",
-      "End",
-      " ",
-    ]);
-    const preventScrollKeys = (e: KeyboardEvent) => {
-      if (scrollKeys.has(e.key)) e.preventDefault();
-    };
-
-    window.addEventListener("wheel", preventScroll, { passive: false });
-    window.addEventListener("touchmove", preventScroll, { passive: false });
-    window.addEventListener("keydown", preventScrollKeys, { passive: false });
-
-    return () => {
-      html.style.overflow = prevHtmlOverflow;
-      body.style.overflow = prevBodyOverflow;
-      window.removeEventListener("wheel", preventScroll);
-      window.removeEventListener("touchmove", preventScroll);
-      window.removeEventListener("keydown", preventScrollKeys);
-    };
-  }, [scrollLocked]);
-
   useEffect(() => {
     const master = masterRef.current;
     const bridge = shotBridgeRef.current;
@@ -307,9 +240,6 @@ export default function AboutInkSplatShowcase() {
           postShotScrollRawRef.current = 0;
           postShotStartRef.current = null;
           frozenCoordRectRef.current = null;
-          bloomFiredRef.current = false;
-          seenBelowCenterRef.current = false;
-          setScrollLocked(false);
         },
       });
 
@@ -393,16 +323,6 @@ export default function AboutInkSplatShowcase() {
           invalidateOnRefresh: true,
           onUpdate: (self) => {
             setCardReveal(self.progress);
-            if (self.progress < 0.5) {
-              seenBelowCenterRef.current = true;
-            }
-            if (
-              self.progress >= 0.5 &&
-              seenBelowCenterRef.current &&
-              !bloomFiredRef.current
-            ) {
-              triggerPour();
-            }
           },
         });
       }
@@ -461,17 +381,7 @@ export default function AboutInkSplatShowcase() {
         <div ref={revealZoneRef} className="ink-splat-pour-block mx-auto max-w-4xl">
           <div className="cin-showcase about-me-card">
             <div className="cin-showcase__stage-wrap cin-showcase__stage-wrap--pour">
-              <div className="relative min-h-[min(580px,82vh)] w-full bg-white">
-                <Suspense fallback={<StageFallback />}>
-                  <InkBloomSplatCard
-                    key={playKey}
-                    playKey={playKey}
-                    waitForPour
-                    pourTrigger={pourTrigger}
-                    onSequenceComplete={handleSequenceComplete}
-                  />
-                </Suspense>
-              </div>
+              <AboutPhosphorCard />
             </div>
           </div>
         </div>

@@ -207,7 +207,7 @@ export default function OrbProjectReveal({ children }: OrbProjectRevealProps) {
           </div>
 
           {showArrows ? (
-            <p className="orb-cta-pulse mt-14 max-w-xs text-center font-mono text-xs font-medium uppercase tracking-[0.35em] text-cyan-200/90 sm:mt-16">
+            <p className="orb-cta-pulse mt-14 max-w-md text-center font-mono text-[16.8px] font-medium uppercase tracking-[0.35em] text-cyan-200/90 sm:mt-16 sm:max-w-lg">
               Click to see my work
             </p>
           ) : null}

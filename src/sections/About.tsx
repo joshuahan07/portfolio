@@ -252,7 +252,7 @@ export default function About() {
         })}
       </div>
 
-      <div className="mb-10 flex flex-col items-center gap-2">
+      <div id="experience" className="mb-10 flex scroll-mt-28 flex-col items-center gap-2">
         <h3 className="font-mono text-[11px] font-semibold uppercase tracking-[0.4em] text-slate-500">
           Experience
         </h3>
