@@ -1,5 +1,5 @@
 import type { BallPose } from "./basketballKnockMath";
-import type { BottlePosition } from "./inkBottlePositionStorage";
+export type BottlePosition = { x: number; y: number };
 
 /** Share of bounce scroll used only for the gravity drop (rim → bounce path start). */
 export const SHOT_TO_BOUNCE_BLEND = 0.32;

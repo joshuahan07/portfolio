@@ -1,4 +1,4 @@
-import type { BottlePosition } from "./inkBottlePositionStorage";
+import type { BottlePosition } from "./scenePoseToViewport";
 import type { BallPose } from "./basketballKnockMath";
 import type { PathPoint } from "./basketballPathStorage";
 import type { PathDocument } from "./basketballPathDocument";
